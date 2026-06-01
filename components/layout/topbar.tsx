@@ -23,7 +23,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOutIcon, UserIcon, CircleUserRound, BookOpenIcon, GithubIcon } from "lucide-react";
+import { LogOutIcon, UserIcon, CircleUserRound, BookOpenIcon } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { getBreadcrumbs } from "./breadcrumbs-util";
 import { getRouteMeta } from "./route-meta";
 import { getServerInfo } from "@/lib/api/system";
@@ -85,7 +86,7 @@ export function Topbar() {
                   {c.isCurrent ? (
                     <BreadcrumbPage className="flex items-center gap-2">
                       {c.icon && (
-                        <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 border border-primary/30 text-primary ring-2 ring-primary/20">
+                        <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
                           <c.icon className="size-4" />
                         </span>
                       )}
@@ -100,7 +101,7 @@ export function Topbar() {
                     c.href ? (
                       <Link href={c.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                         {c.icon && (
-                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 border border-primary/30 text-primary ring-2 ring-primary/20">
+                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <c.icon className="size-4" />
                           </span>
                         )}
@@ -109,7 +110,7 @@ export function Topbar() {
                     ) : (
                       <span className="flex items-center gap-2 text-sm text-muted-foreground">
                         {c.icon && (
-                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 border border-primary/30 text-primary ring-2 ring-primary/20">
+                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <c.icon className="size-4" />
                           </span>
                         )}
@@ -219,10 +220,10 @@ export function Topbar() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-9 w-14 p-0"
+                    className="relative size-9 p-0"
                     aria-label="User menu"
                   >
-                    <Avatar className="h-9 w-14 rounded-md">
+                    <Avatar className="size-9 rounded-md">
                       <AvatarFallback className="bg-muted text-muted-foreground rounded-md">
                         <CircleUserRound className="size-5" />
                       </AvatarFallback>

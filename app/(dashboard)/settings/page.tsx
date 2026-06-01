@@ -6,7 +6,8 @@ import yamlLang from "react-syntax-highlighter/dist/esm/languages/hljs/yaml";
 import github from "react-syntax-highlighter/dist/esm/styles/hljs/github";
 import atomOneDark from "react-syntax-highlighter/dist/esm/styles/hljs/atom-one-dark";
 import { useTheme } from "next-themes";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { SectionCardHeader } from "@/components/shared/section-card-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ import { API_PREFIX } from "@/lib/api/prefix";
 export default function SettingsPage() {
   const [endpoint, setEndpoint] = React.useState("");
   const [token, setToken] = React.useState("");
+  const [prefixKey, setPrefixKey] = React.useState("");
   const [demoModeEnabled, setDemoModeEnabled] = React.useState(false);
   const [preset, setPreset] = React.useState("default");
   const [sidebarCollapsedByDefault, setSidebarCollapsedByDefault] = React.useState(false);
@@ -57,11 +59,13 @@ export default function SettingsPage() {
     if (typeof window !== "undefined") {
       const savedEndpoint = localStorage.getItem("osmedeus_api_endpoint") || "";
       const savedToken = localStorage.getItem("osmedeus_token") || "";
+      const savedPrefixKey = localStorage.getItem("osmedeus_workspace_prefix_key") || "";
       const savedPreset = localStorage.getItem("osmedeus_theme_preset");
       const savedSidebarCollapsedByDefault =
         localStorage.getItem("osmedeus_sidebar_collapsed_by_default") === "true";
       setEndpoint(savedEndpoint);
       setToken(savedToken);
+      setPrefixKey(savedPrefixKey);
       if (savedPreset) setPreset(savedPreset);
       setSidebarCollapsedByDefault(savedSidebarCollapsedByDefault);
       // Load demo mode preference
@@ -98,6 +102,7 @@ export default function SettingsPage() {
 
       localStorage.setItem("osmedeus_api_endpoint", cleanEndpoint);
       localStorage.setItem("osmedeus_token", token);
+      localStorage.setItem("osmedeus_workspace_prefix_key", prefixKey.trim());
       toast.success("API configuration saved");
     }
   };
@@ -149,14 +154,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Data Source */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DatabaseIcon className="size-5" />
-            Data Source
-          </CardTitle>
-          <CardDescription>Choose between demo data or real API</CardDescription>
-        </CardHeader>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={DatabaseIcon}
+          title="Data Source"
+          description="Choose between demo data or real API"
+        />
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -184,14 +187,12 @@ export default function SettingsPage() {
       </Card>
 
       {/* API Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PlugIcon className="size-5" />
-            API Configuration
-          </CardTitle>
-          <CardDescription>Configure the backend endpoint and authentication token</CardDescription>
-        </CardHeader>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={PlugIcon}
+          title="API Configuration"
+          description="Configure the backend endpoint and authentication token"
+        />
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -212,6 +213,41 @@ export default function SettingsPage() {
               />
             </div>
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Workspace Prefix Key</label>
+            <Input
+              type="password"
+              placeholder="workspace_prefix_key"
+              value={prefixKey}
+              onChange={(e) => setPrefixKey(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              Secret key from the server config (server.workspace_prefix_key). Enables
+              opening raw artifacts in a new tab via the static{" "}
+              <code className="font-mono text-xs">/ws/&lt;key&gt;/…</code> route.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Get it from the server with{" "}
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      "osmedeus config view server.workspace_prefix_key --force"
+                    );
+                    toast.success("Command copied to clipboard");
+                  } catch {
+                    toast.error("Failed to copy");
+                  }
+                }}
+                title="Click to copy"
+                className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-mono text-xs cursor-pointer transition-colors hover:bg-muted/80"
+              >
+                osmedeus config view server.workspace_prefix_key --force
+                <ClipboardIcon className="size-3" />
+              </button>
+            </p>
+          </div>
           <Button onClick={saveApiConfig}>
             <SaveIcon className="mr-2 size-4" />
             Save API Configuration
@@ -220,16 +256,12 @@ export default function SettingsPage() {
       </Card>
 
       {/* Appearance */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <PaletteIcon className="size-5" />
-                Appearance
-              </CardTitle>
-              <CardDescription>Customize the dashboard theme</CardDescription>
-            </div>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={PaletteIcon}
+          title="Appearance"
+          description="Customize the dashboard theme"
+          actions={
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Theme Presets</label>
               <Select value={preset} onValueChange={savePreset}>
@@ -288,8 +320,8 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </CardHeader>
+          }
+        />
         <CardContent className="space-y-4">
           {currentPreset && (
             <div className="flex flex-wrap gap-4">
@@ -342,24 +374,18 @@ export default function SettingsPage() {
       </Card>
 
       {/* Server Configuration */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="size-5" />
-                Server Configuration
-              </CardTitle>
-              <CardDescription>View the server YAML configuration (read-only)</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={copyYaml} disabled={!settingsYaml}>
-                <ClipboardIcon className="mr-2 size-4" />
-                Copy
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={SettingsIcon}
+          title="Server Configuration"
+          description="View the server YAML configuration (read-only)"
+          actions={
+            <Button variant="outline" size="sm" onClick={copyYaml} disabled={!settingsYaml}>
+              <ClipboardIcon className="mr-2 size-4" />
+              Copy
+            </Button>
+          }
+        />
         <CardContent className="space-y-4">
           <Collapsible open={serverConfigCliOpen} onOpenChange={setServerConfigCliOpen}>
             <div className="rounded-md border bg-muted/30 p-3">

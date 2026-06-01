@@ -10,7 +10,11 @@ import markdownLang from "react-syntax-highlighter/dist/esm/languages/hljs/markd
 import xmlLang from "react-syntax-highlighter/dist/esm/languages/hljs/xml";
 import github from "react-syntax-highlighter/dist/esm/styles/hljs/github";
 import atomOneDark from "react-syntax-highlighter/dist/esm/styles/hljs/atom-one-dark";
-import { fetchArtifacts, fetchArtifactContent } from "@/lib/api/artifacts";
+import {
+  fetchArtifacts,
+  fetchArtifactContent,
+  buildWorkspaceArtifactUrl,
+} from "@/lib/api/artifacts";
 import type { SortDirection } from "@/lib/types/asset";
 import type { Artifact } from "@/lib/types/artifact";
 import type { PaginatedResponse } from "@/lib/types/api";
@@ -53,6 +57,7 @@ import {
   BookSearchIcon,
   ClipboardIcon,
   DownloadIcon,
+  ExternalLinkIcon,
   FileTextIcon,
   FolderOpenIcon,
   LoaderIcon,
@@ -285,6 +290,21 @@ export default function InventoryArtifactsPage() {
     },
     [loadArtifactContent]
   );
+
+  const openArtifactInNewTab = React.useCallback((a: Artifact) => {
+    const url = buildWorkspaceArtifactUrl({
+      workspace: a.workspace,
+      artifactPath: a.artifactPath,
+    });
+    if (!url) {
+      toast.error("Workspace Prefix Key not set", {
+        description:
+          "Add it in Settings → API Configuration to open raw artifacts in a new tab.",
+      });
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, []);
 
   const artifactTypes = React.useMemo(() => {
     const set = new Set<string>(["report", "output", "state_file", "screenshot"]);
@@ -687,6 +707,14 @@ export default function InventoryArtifactsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => openArtifactInNewTab(selectedArtifact)}
+                      >
+                        <ExternalLinkIcon className="mr-2 size-4" />
+                        Open Raw in New Tab
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           const name = inferDownloadName(selectedArtifact);
                           const blob = new Blob([contentText], {
@@ -1082,6 +1110,18 @@ export default function InventoryArtifactsPage() {
                                 aria-label="Fetch content"
                               >
                                 <BookSearchIcon className="size-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon-sm"
+                                className="rounded-md"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openArtifactInNewTab(a);
+                                }}
+                                aria-label="Open raw in new tab"
+                              >
+                                <ExternalLinkIcon className="size-4" />
                               </Button>
                             </div>
                           </TableCell>

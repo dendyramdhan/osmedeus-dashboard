@@ -138,6 +138,19 @@ export const CATEGORY_BADGE_VARIANT: Record<TechCategory, string> = {
   other: "outline",
 };
 
+// Category to dot color mapping (solid colors, readable on dark surfaces)
+export const CATEGORY_DOT_COLOR: Record<TechCategory, string> = {
+  webServer: "bg-blue-400",
+  frontend: "bg-green-400",
+  backend: "bg-yellow-400",
+  database: "bg-purple-400",
+  cms: "bg-pink-400",
+  cdn: "bg-cyan-400",
+  security: "bg-red-400",
+  language: "bg-orange-400",
+  other: "bg-zinc-400",
+};
+
 // Category display labels
 export const CATEGORY_LABELS: Record<TechCategory, string> = {
   webServer: "Web Server",

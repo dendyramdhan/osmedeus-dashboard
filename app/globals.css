@@ -64,7 +64,8 @@
   --popover: hsl(60 2.1277% 18.4314%);
   --popover-foreground: hsl(60 5.4545% 89.2157%);
   --primary: hsl(116.2500 62.7451% 60%);
-  --primary-foreground: hsl(0 0% 100%);
+  /* Dark text on the bright-green primary — white failed WCAG (~1.5:1). */
+  --primary-foreground: hsl(60 6% 10%);
   --secondary: hsl(48 33.3333% 97.0588%);
   --secondary-foreground: hsl(60 2.1277% 18.4314%);
   --muted: hsl(60 3.8462% 10.1961%);
@@ -214,12 +215,8 @@ html {
 }
 
 .glow-card:hover {
-  box-shadow: 0 0 30px rgba(32, 178, 170, 0.15), 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--primary) 15%, transparent), 0 4px 20px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
-}
-
-.dark .glow-card:hover {
-  box-shadow: 0 0 30px rgba(76, 175, 80, 0.2), 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Primary glow for interactive elements */
@@ -228,11 +225,7 @@ html {
 }
 
 .glow-primary:hover {
-  box-shadow: 0 0 20px rgba(32, 178, 170, 0.4);
-}
-
-.dark .glow-primary:hover {
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 /* Blur background utility */

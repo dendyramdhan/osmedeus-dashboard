@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import {
   TECH_CATEGORY_MAP,
   CATEGORY_BADGE_VARIANT,
+  CATEGORY_DOT_COLOR,
 } from "@/lib/constants/tech-categories";
 import type { TechCategory, HttpAsset, AssetSortField, SortDirection, Workspace, WorkspaceSortField } from "@/lib/types/asset";
 
@@ -105,6 +106,10 @@ export function getTechBadgeVariant(tech: string): string {
   return CATEGORY_BADGE_VARIANT[category];
 }
 
+export function getTechDotColor(tech: string): string {
+  return CATEGORY_DOT_COLOR[getTechCategory(tech)];
+}
+
 export function groupTechnologiesByCategory(
   technologies: string[]
 ): Record<TechCategory, string[]> {
@@ -173,9 +178,6 @@ export function sortAssets(
         comparison =
           parseResponseTime(a.responseTime) - parseResponseTime(b.responseTime);
         break;
-      case "actions":
-        comparison = a.url.localeCompare(b.url);
-        break;
     }
 
     return direction === "asc" ? comparison : -comparison;
@@ -233,4 +235,33 @@ export function sortWorkspaces(
 
     return direction === "asc" ? comparison : -comparison;
   });
+}
+
+// HTTP status-code → badge variant. Single source of truth shared by the assets
+// table, the asset detail dialog, and the status summary badges so the bands
+// never drift apart.
+export type StatusBadgeVariant =
+  | "success"
+  | "info"
+  | "warning"
+  | "destructive"
+  | "secondary";
+
+export const STATUS_BANDS: Array<{
+  label: string;
+  variant: Exclude<StatusBadgeVariant, "secondary">;
+  min: number;
+  max: number;
+}> = [
+  { label: "2xx", variant: "success", min: 200, max: 300 },
+  { label: "3xx", variant: "info", min: 300, max: 400 },
+  { label: "4xx", variant: "warning", min: 400, max: 500 },
+  { label: "5xx", variant: "destructive", min: 500, max: 600 },
+];
+
+export function getStatusBadgeVariant(statusCode: number): StatusBadgeVariant {
+  return (
+    STATUS_BANDS.find((b) => statusCode >= b.min && statusCode < b.max)?.variant ??
+    "secondary"
+  );
 }

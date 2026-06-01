@@ -21,7 +21,8 @@ import {
   RepeatIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { SectionCardHeader } from "@/components/shared/section-card-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -342,26 +343,20 @@ export default function ScansPage() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <ScanSearchIcon className="size-5" />
-                Scans
-              </CardTitle>
-              <CardDescription>
-                Filter by status, workflow, or target
-              </CardDescription>
-            </div>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={ScanSearchIcon}
+          title="Scans"
+          description="Filter by status, workflow, or target"
+          actions={
             <Button asChild>
               <Link href="/scans/new">
                 <PlusIcon className="mr-2 size-4" />
                 New Scan
               </Link>
             </Button>
-          </div>
-        </CardHeader>
+          }
+        />
         <CardContent>
           <div className="flex flex-wrap gap-3 py-2">
             <Input
@@ -555,18 +550,16 @@ export default function ScansPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardListIcon className="size-5 text-muted-foreground" />
-                Scan Details
-              </CardTitle>
-              <CardDescription>
-                {selectedScan ? "Selected scan details and step output" : "Select a scan to view details"}
-              </CardDescription>
-            </div>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={ClipboardListIcon}
+          title="Scan Details"
+          description={
+            selectedScan
+              ? "Selected scan details and step output"
+              : "Select a scan to view details"
+          }
+          actions={
             <Button
               className="rounded-md"
               variant="outline"
@@ -587,8 +580,8 @@ export default function ScansPage() {
               <ClipboardIcon className="size-4" />
               <span className="sr-only">Copy JSON</span>
             </Button>
-          </div>
-        </CardHeader>
+          }
+        />
         <CardContent>
           <ScrollArea className="h-[70vh] lg:h-[75vh] rounded-md border bg-muted/20">
             <div className="p-5 space-y-5 text-sm">

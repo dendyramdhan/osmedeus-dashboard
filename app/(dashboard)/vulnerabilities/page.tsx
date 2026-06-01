@@ -6,16 +6,13 @@ import {
   fetchVulnerabilitySummary,
 } from "@/lib/api/vulnerabilities";
 import type { Vulnerability, VulnerabilitySummary, VulnerabilitySeverity } from "@/lib/types/vulnerability";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { SectionCardHeader } from "@/components/shared/section-card-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  InfoIcon,
   ShieldAlertIcon,
   AlertTriangleIcon,
-  AlertCircleIcon,
-  AlertOctagonIcon,
-  InfoIcon as InfoCircleIcon,
   BarChart3Icon,
   GlobeIcon,
   BadgeCheckIcon,
@@ -23,7 +20,6 @@ import {
   ListIcon,
   SearchIcon,
   RotateCcwIcon,
-  EyeIcon,
   ChevronsUpDownIcon,
   ArrowUpIcon,
   ArrowDownIcon,
@@ -32,13 +28,12 @@ import {
 import { fetchWorkspaces } from "@/lib/api/assets";
 import type { Workspace } from "@/lib/types/asset";
 import type { SortDirection } from "@/lib/types/asset";
+import { VulnerabilityDetailDialog } from "@/components/vulnerabilities/vulnerability-detail-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  severityConfig,
+  getTagColor,
+  SeverityBadge,
+} from "@/components/vulnerabilities/vulnerability-display";
 import {
   Popover,
   PopoverContent,
@@ -56,62 +51,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import type { PaginatedResponse } from "@/lib/types/api";
 import type { VulnerabilityConfidence } from "@/lib/types/vulnerability";
-
-// Helper function to determine tag color based on category
-const getTagColor = (tag: string): string => {
-  const t = tag.toLowerCase();
-  // CVE identifiers
-  if (t.startsWith("cve-")) return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
-  // Tool names
-  if (["nuclei", "nmap", "ffuf", "httpx", "subfinder", "amass", "masscan", "dirsearch", "gobuster", "feroxbuster"].includes(t))
-    return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800";
-  // Vulnerability types
-  if (["xss", "sqli", "rce", "lfi", "rfi", "ssrf", "idor", "xxe", "ssti", "csrf", "injection", "redirect"].includes(t))
-    return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800";
-  // Default gray
-  return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
-};
-
-const severityConfig: Record<
-  VulnerabilitySeverity,
-  {
-    label: string;
-    variant: "destructive" | "warning" | "secondary" | "outline" | "info";
-    icon: React.ElementType;
-    color: string;
-  }
-> = {
-  critical: {
-    label: "Critical",
-    variant: "destructive",
-    icon: AlertOctagonIcon,
-    color: "text-red-600 dark:text-red-400",
-  },
-  high: {
-    label: "High",
-    variant: "warning",
-    icon: AlertTriangleIcon,
-    color: "text-yellow-600 dark:text-yellow-400",
-  },
-  medium: {
-    label: "Medium",
-    variant: "secondary",
-    icon: AlertCircleIcon,
-    color: "text-orange-600 dark:text-orange-400",
-  },
-  low: {
-    label: "Low",
-    variant: "outline",
-    icon: InfoIcon,
-    color: "text-gray-600 dark:text-gray-400",
-  },
-  info: {
-    label: "Info",
-    variant: "info",
-    icon: InfoCircleIcon,
-    color: "text-blue-600 dark:text-blue-400",
-  },
-};
 
 const severityOptions: VulnerabilitySeverity[] = [
   "critical",
@@ -134,8 +73,7 @@ export default function VulnerabilitiesPage() {
     | "confidence"
     | "title"
     | "asset"
-    | "tags"
-    | "actions";
+    | "tags";
 
   const [vulnerabilities, setVulnerabilities] = React.useState<Vulnerability[]>([]);
   const [summary, setSummary] = React.useState<VulnerabilitySummary | null>(null);
@@ -168,7 +106,6 @@ export default function VulnerabilitiesPage() {
     title: true,
     asset: true,
     tags: true,
-    actions: true,
   });
 
   const columnOptions = React.useMemo(
@@ -178,7 +115,6 @@ export default function VulnerabilitiesPage() {
       { key: "title", label: "Title" },
       { key: "asset", label: "Asset" },
       { key: "tags", label: "Tags" },
-      { key: "actions", label: "Actions" },
     ],
     []
   );
@@ -265,13 +201,6 @@ export default function VulnerabilitiesPage() {
             missing: (v.tags ?? []).length === 0,
             value: (v.tags ?? []).join(","),
           };
-        case "actions": {
-          const n = Number.parseInt(v.id, 10);
-          return {
-            missing: Number.isNaN(n) && !v.id,
-            value: Number.isNaN(n) ? v.id : n,
-          };
-        }
       }
     };
 
@@ -419,19 +348,8 @@ export default function VulnerabilitiesPage() {
     setOpen(true);
   };
 
-  const SeverityBadge = ({ severity }: { severity: VulnerabilitySeverity }) => {
-    const config = severityConfig[severity] || severityConfig.info;
-    const Icon = config.icon;
-    return (
-      <Badge variant={config.variant} className="gap-1">
-        <Icon className="size-3" />
-        {config.label}
-      </Badge>
-    );
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Compact Severity Summary */}
       <div className="rounded-lg border bg-card p-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -463,31 +381,27 @@ export default function VulnerabilitiesPage() {
       </div>
 
       {/* Filters and Table */}
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="space-y-1.5">
-            <CardTitle className="flex items-center gap-2">
-              <ShieldAlertIcon className="size-5" />
-              Vulnerabilities
-            </CardTitle>
-            <CardDescription>
-              Filter by workspace, severity, or confidence
-            </CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            className="shrink-0"
-            onClick={() => {
-              setFilters({});
-              setSearchValue("");
-              setPage(1);
-              setPageSize(20);
-            }}
-          >
-            <RotateCcwIcon className="mr-2 size-4" />
-            Reset
-          </Button>
-        </CardHeader>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={ShieldAlertIcon}
+          title="Vulnerabilities"
+          description="Filter by workspace, severity, or confidence"
+          actions={
+            <Button
+              variant="outline"
+              className="shrink-0"
+              onClick={() => {
+                setFilters({});
+                setSearchValue("");
+                setPage(1);
+                setPageSize(20);
+              }}
+            >
+              <RotateCcwIcon className="mr-2 size-4" />
+              Reset
+            </Button>
+          }
+        />
         <CardContent>
           <div className="flex flex-wrap gap-3 py-2">
             <div className="relative flex-1 min-w-[240px]">
@@ -740,19 +654,15 @@ export default function VulnerabilitiesPage() {
                         </button>
                       </th>
                     )}
-                    {visibleColumns.actions && (
-                      <th className="p-2 text-left">
-                        <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("actions")}>
-                          <span>Actions</span>
-                          {renderSortIcon("actions")}
-                        </button>
-                      </th>
-                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {sortedVulnerabilities.map((v) => (
-                    <tr key={v.id} className="border-b">
+                    <tr
+                      key={v.id}
+                      className="border-b cursor-pointer transition-colors hover:bg-muted/50"
+                      onClick={() => openDetail(v)}
+                    >
                       {visibleColumns.severity && (
                         <td className="p-2">
                           <SeverityBadge severity={v.severity} />
@@ -802,19 +712,6 @@ export default function VulnerabilitiesPage() {
                               </Badge>
                             )}
                           </div>
-                        </td>
-                      )}
-                      {visibleColumns.actions && (
-                        <td className="p-2">
-                          <Button
-                            variant="outline"
-                            size="icon-sm"
-                            className="rounded-md"
-                            onClick={() => openDetail(v)}
-                            aria-label="View"
-                          >
-                            <EyeIcon className="size-4" />
-                          </Button>
                         </td>
                       )}
                     </tr>
@@ -889,125 +786,12 @@ export default function VulnerabilitiesPage() {
         </CardContent>
       </Card>
 
-      {/* Detail Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selected && <SeverityBadge severity={selected.severity} />}
-              Vulnerability Details
-            </DialogTitle>
-            <DialogDescription>
-              {selected?.vulnInfo || "Vulnerability information"}
-            </DialogDescription>
-          </DialogHeader>
-          {selected && (
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="font-medium text-muted-foreground">Title</p>
-                  <p>{selected.vulnTitle || "-"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Workspace</p>
-                  <p>{selected.workspace || "-"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Confidence</p>
-                  <p>{selected.confidence || "-"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Asset Type</p>
-                  <p>{selected.assetType || "-"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Asset Value</p>
-                  <p className="font-mono text-xs break-all">
-                    {selected.assetValue || "-"}
-                  </p>
-                </div>
-              </div>
-
-              {selected.vulnDesc && (
-                <div>
-                  <p className="font-medium text-muted-foreground">Description</p>
-                  <p className="whitespace-pre-wrap">{selected.vulnDesc}</p>
-                </div>
-              )}
-
-              {selected.tags.length > 0 && (
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Tags</p>
-                  <div className="flex flex-wrap gap-1">
-                    {selected.tags.map((tag, i) => (
-                      <Badge key={i} variant="outline" className={getTagColor(tag)}>
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selected.vulnPoc && (
-                <div>
-                  <p className="font-medium text-muted-foreground">
-                    Proof of Concept
-                  </p>
-                  <pre className="mt-1 rounded bg-muted p-2 text-xs overflow-x-auto whitespace-pre-wrap break-all">
-                    {selected.vulnPoc}
-                  </pre>
-                </div>
-              )}
-
-              {selected.detailHttpRequest && (
-                <div>
-                  <p className="font-medium text-muted-foreground">HTTP Request</p>
-                  <pre className="mt-1 rounded bg-muted p-2 text-xs overflow-x-auto whitespace-pre-wrap">
-                    {selected.detailHttpRequest}
-                  </pre>
-                </div>
-              )}
-
-              {selected.detailHttpResponse && (
-                <div>
-                  <p className="font-medium text-muted-foreground">HTTP Response</p>
-                  <pre className="mt-1 rounded bg-muted p-2 text-xs overflow-x-auto whitespace-pre-wrap">
-                    {selected.detailHttpResponse}
-                  </pre>
-                </div>
-              )}
-
-              {selected.rawVulnJson && (
-                <div>
-                  <p className="font-medium text-muted-foreground">Raw JSON</p>
-                  <pre className="mt-1 rounded bg-muted p-2 text-xs overflow-x-auto whitespace-pre-wrap">
-                    {(() => {
-                      try {
-                        return JSON.stringify(
-                          JSON.parse(selected.rawVulnJson),
-                          null,
-                          2
-                        );
-                      } catch {
-                        return selected.rawVulnJson;
-                      }
-                    })()}
-                  </pre>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                <div>
-                  Created: {selected.createdAt?.toLocaleString() || "-"}
-                </div>
-                <div>
-                  Updated: {selected.updatedAt?.toLocaleString() || "-"}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Detail Drawer */}
+      <VulnerabilityDetailDialog
+        vulnerability={selected}
+        open={open}
+        onOpenChange={setOpen}
+      />
     </div>
   );
 }

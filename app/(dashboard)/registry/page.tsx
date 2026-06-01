@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { SectionCardHeader } from "@/components/shared/section-card-header";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -350,22 +351,20 @@ export default function RegistryPage() {
   return (
     <div className="space-y-6">
       {/* Binary Registry Card */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <PackageIcon className="size-5" />
-                Binary Registry
-              </CardTitle>
-              <CardDescription>
-                Installing binaries is better handled through the CLI (
-                <span className="font-mono">osmedeus install binary -h</span>), as it provides a
-                more flexible way to manage binary installation. This page is mainly for
-                visualization purposes.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-3">
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={PackageIcon}
+          title="Binary Registry"
+          description={
+            <>
+              Installing binaries is better handled through the CLI (
+              <span className="font-mono">osmedeus install binary -h</span>), as it
+              provides a more flexible way to manage binary installation. This page
+              is mainly for visualization purposes.
+            </>
+          }
+          actions={
+            <>
               <Button variant="outline" size="sm" onClick={load} disabled={loading}>
                 <RefreshCwIcon className="mr-2 size-4" />
                 Refresh
@@ -379,9 +378,9 @@ export default function RegistryPage() {
                 <PlusCircleIcon className="mr-2 size-4" />
                 Include Optional
               </Button>
-            </div>
-          </div>
-        </CardHeader>
+            </>
+          }
+        />
 
         <CardContent className="space-y-4">
           {/* Filters */}
@@ -687,16 +686,12 @@ export default function RegistryPage() {
       </Card>
 
       {/* Install Workflow Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GitBranchIcon className="size-5" />
-            Install Workflow
-          </CardTitle>
-          <CardDescription>
-            Install workflow from a Git repository or ZIP archive URL
-          </CardDescription>
-        </CardHeader>
+      <Card className="overflow-hidden">
+        <SectionCardHeader
+          icon={GitBranchIcon}
+          title="Install Workflow"
+          description="Install workflow from a Git repository or ZIP archive URL"
+        />
         <CardContent>
           <div className="flex flex-col gap-4 sm:flex-row">
             <div className="flex-1">

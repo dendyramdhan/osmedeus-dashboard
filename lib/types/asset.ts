@@ -110,8 +110,7 @@ export type AssetSortField =
   | "hostIp"
   | "remarks"
   | "technologies"
-  | "responseTime"
-  | "actions";
+  | "responseTime";
 
 export type SortDirection = "asc" | "desc";
 

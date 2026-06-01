@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes, getStatusBadgeVariant } from "@/lib/utils";
 import type { HttpAsset } from "@/lib/types/asset";
 import {
   GlobeIcon,
@@ -25,16 +25,6 @@ interface AssetDetailDialogProps {
   asset: HttpAsset | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function getStatusBadgeVariant(
-  statusCode: number
-): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
-  if (statusCode >= 200 && statusCode < 300) return "success";
-  if (statusCode >= 300 && statusCode < 400) return "warning";
-  if (statusCode >= 400 && statusCode < 500) return "outline";
-  if (statusCode >= 500) return "destructive";
-  return "secondary";
 }
 
 export function AssetDetailDialog({

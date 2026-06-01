@@ -1,4 +1,4 @@
-import { http } from "./http";
+import { http, getHttpBaseURL } from "./http";
 import { API_PREFIX } from "@/lib/api/prefix";
 import { isDemoMode } from "./demo-mode";
 import type { PaginatedResponse } from "@/lib/types/api";
@@ -120,6 +120,45 @@ export async function fetchArtifacts(params: {
       totalPages: Math.max(1, Math.ceil((Number.isFinite(total) ? total : mapped.length) / pageSize)),
     },
   };
+}
+
+export const WORKSPACE_PREFIX_KEY_STORAGE = "osmedeus_workspace_prefix_key";
+
+// The workspace_prefix_key gates the backend's unauthenticated static workspace
+// serving route (GET /ws/{workspace_prefix_key}/*). It is a secret configured on
+// the server, so the dashboard reads it from local config (or a build-time env var).
+export function getWorkspacePrefixKey(): string {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem(WORKSPACE_PREFIX_KEY_STORAGE);
+    if (saved && saved.trim()) return saved.trim();
+  }
+  const env = process.env.NEXT_PUBLIC_WORKSPACE_PREFIX_KEY;
+  return env ? env.trim() : "";
+}
+
+// Build the raw, unauthenticated static URL for an artifact served by the backend
+// at /ws/{workspace_prefix_key}/{workspace}/{relative_path}. Returns null when the
+// prefix key has not been configured. The browser can open this URL directly in a
+// new tab — the server renders HTML natively and lists folders (directory browsing).
+export function buildWorkspaceArtifactUrl(params: {
+  workspace: string;
+  artifactPath: string;
+}): string | null {
+  const workspace = (params.workspace ?? "").trim();
+  const artifactPath = (params.artifactPath ?? "").trim();
+  if (!workspace || !artifactPath) return null;
+
+  const prefixKey = getWorkspacePrefixKey();
+  if (!prefixKey) return null;
+
+  const base = getHttpBaseURL().replace(/\/+$/, "");
+  const rel = toRelativeArtifactPath(artifactPath, workspace);
+  const segments = [workspace, ...rel.split("/")]
+    .filter(Boolean)
+    .map((s) => encodeURIComponent(s))
+    .join("/");
+
+  return `${base}/ws/${encodeURIComponent(prefixKey)}/${segments}`;
 }
 
 function toRelativeArtifactPath(fullPath: string, workspace: string): string {

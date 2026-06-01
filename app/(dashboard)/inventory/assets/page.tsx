@@ -12,13 +12,8 @@ import type {
   AssetSortField,
   AssetStats,
 } from "@/lib/types/asset";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { SectionCardHeader } from "@/components/shared/section-card-header";
 import {
   Select,
   SelectTrigger,
@@ -28,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCcwIcon } from "lucide-react";
+import { RefreshCcwIcon, Rows3Icon, Rows4Icon } from "lucide-react";
 import { toast } from "sonner";
 import { AssetFilters } from "@/components/assets/asset-filters";
 import {
@@ -36,7 +31,7 @@ import {
   type HttpAssetsColumnKey,
 } from "@/components/assets/http-assets-table";
 import { AssetDetailDialog } from "@/components/assets/asset-detail-dialog";
-import { sortAssets } from "@/lib/utils";
+import { sortAssets, STATUS_BANDS } from "@/lib/utils";
 
 export default function InventoryAssetsPage() {
   const searchParams = useSearchParams();
@@ -61,6 +56,9 @@ export default function InventoryAssetsPage() {
     field: null,
     direction: "asc",
   });
+  const [density, setDensity] = React.useState<"comfortable" | "compact">(
+    "comfortable"
+  );
   const [visibleColumns, setVisibleColumns] = React.useState<
     Record<HttpAssetsColumnKey, boolean>
   >(() => ({
@@ -89,7 +87,6 @@ export default function InventoryAssetsPage() {
     createdAt: false,
     updatedAt: false,
     lastSeenAt: false,
-    actions: true,
   }));
   const lastFetchRef = React.useRef<number>(0);
   const forceNextRef = React.useRef<boolean>(false);
@@ -324,7 +321,6 @@ export default function InventoryAssetsPage() {
       { key: "createdAt", label: "Created At" },
       { key: "updatedAt", label: "Updated At" },
       { key: "lastSeenAt", label: "Last Seen At" },
-      { key: "actions", label: "Actions" },
     ],
     []
   );
@@ -349,34 +345,32 @@ export default function InventoryAssetsPage() {
     <div className="space-y-6">
       {/* Main Content Card */}
       <Card className="overflow-hidden">
-        <CardHeader className="border-b bg-muted/30 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-base">Assets Inventory</CardTitle>
-              <CardDescription>
-                {assetsResponse?.pagination?.totalItems !== undefined ? (
+        <SectionCardHeader
+          title="Assets Inventory"
+          description={
+            assetsResponse?.pagination?.totalItems !== undefined ? (
+              <>
+                <span className="font-medium text-foreground">
+                  {assetsResponse.pagination.totalItems.toLocaleString()}
+                </span>{" "}
+                assets found
+                {selectedWorkspace !== "all" && (
                   <>
+                    {" "}
+                    in{" "}
                     <span className="font-medium text-foreground">
-                      {assetsResponse.pagination.totalItems.toLocaleString()}
-                    </span>{" "}
-                    assets found
-                    {selectedWorkspace !== "all" && (
-                      <>
-                        {" "}
-                        in{" "}
-                        <span className="font-medium text-foreground">
-                          {workspaces.find((w) => String(w.id) === selectedWorkspace)
-                            ?.name ?? selectedWorkspace}
-                        </span>
-                      </>
-                    )}
+                      {workspaces.find((w) => String(w.id) === selectedWorkspace)
+                        ?.name ?? selectedWorkspace}
+                    </span>
                   </>
-                ) : (
-                  "Loading assets..."
                 )}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+              </>
+            ) : (
+              "Loading assets..."
+            )
+          }
+          actions={
+            <>
               <Select
                 value={selectedWorkspace}
                 onValueChange={(v) => {
@@ -408,41 +402,50 @@ export default function InventoryAssetsPage() {
                 />
                 Refresh
               </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() =>
+                  setDensity((d) =>
+                    d === "compact" ? "comfortable" : "compact"
+                  )
+                }
+                aria-label={
+                  density === "compact"
+                    ? "Switch to comfortable rows"
+                    : "Switch to compact rows"
+                }
+                title={
+                  density === "compact" ? "Comfortable rows" : "Compact rows"
+                }
+              >
+                {density === "compact" ? (
+                  <Rows4Icon className="size-4" />
+                ) : (
+                  <Rows3Icon className="size-4" />
+                )}
+              </Button>
               {sortedAssets.length > 0 && (
                 <div className="hidden lg:flex items-center gap-2">
-                  <Badge variant="success" className="gap-1">
-                    2xx:{" "}
-                    {
-                      sortedAssets.filter(
-                        (a) => a.statusCode >= 200 && a.statusCode < 300
-                      ).length
-                    }
-                  </Badge>
-                  <Badge variant="warning" className="gap-1">
-                    3xx:{" "}
-                    {
-                      sortedAssets.filter(
-                        (a) => a.statusCode >= 300 && a.statusCode < 400
-                      ).length
-                    }
-                  </Badge>
-                  <Badge variant="outline" className="gap-1">
-                    4xx:{" "}
-                    {
-                      sortedAssets.filter(
-                        (a) => a.statusCode >= 400 && a.statusCode < 500
-                      ).length
-                    }
-                  </Badge>
-                  <Badge variant="destructive" className="gap-1">
-                    5xx:{" "}
-                    {sortedAssets.filter((a) => a.statusCode >= 500).length}
-                  </Badge>
+                  {(() => {
+                    const counts = sortedAssets.reduce((acc, a) => {
+                      const band = STATUS_BANDS.find(
+                        (b) => a.statusCode >= b.min && a.statusCode < b.max
+                      );
+                      if (band) acc[band.label] = (acc[band.label] ?? 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>);
+                    return STATUS_BANDS.map((b) => (
+                      <Badge key={b.label} variant={b.variant} className="gap-1">
+                        {b.label}: {counts[b.label] ?? 0}
+                      </Badge>
+                    ));
+                  })()}
                 </div>
               )}
-            </div>
-          </div>
-        </CardHeader>
+            </>
+          }
+        />
 
         {/* Filters section */}
         <div className="border-b p-4 bg-muted/10">
@@ -483,6 +486,7 @@ export default function InventoryAssetsPage() {
             }}
             hasActiveFilters={hasActiveFilters}
             visibleColumns={visibleColumns}
+            density={density}
           />
         </CardContent>
       </Card>

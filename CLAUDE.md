@@ -50,7 +50,7 @@ The workflow editor at `/workflows/[id]` visualizes YAML workflows using React F
 - Feature components in `components/scans/`, `components/assets/`, `components/dashboard/`
 
 ### Theming
-Tailwind CSS v4 with CSS variables defined in `app/globals.css`. Theme switching via `next-themes` in `providers/theme-provider.tsx`. Reference `color-scheme.css` for the full color palette.
+Tailwind CSS v4 with CSS variables defined in `app/globals.css` — the single source of truth for the color palette (light `:root` and `.dark`). Theme switching via `next-themes` in `providers/theme-provider.tsx`.
 
 ## Key Files
 

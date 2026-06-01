@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SortableTableHead } from "@/components/ui/sortable-table-head";
-import { truncate, getTechBadgeVariant } from "@/lib/utils";
+import { truncate, getTechDotColor, getStatusBadgeVariant, cn } from "@/lib/utils";
 import type { HttpAsset, AssetSortState, AssetSortField } from "@/lib/types/asset";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
@@ -30,7 +30,6 @@ import {
   CopyIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  EyeIcon,
   SearchXIcon,
 } from "lucide-react";
 
@@ -59,8 +58,7 @@ export type HttpAssetsColumnKey =
   | "source"
   | "createdAt"
   | "updatedAt"
-  | "lastSeenAt"
-  | "actions";
+  | "lastSeenAt";
 
 const defaultVisibleColumns: Record<HttpAssetsColumnKey, boolean> = {
   id: false,
@@ -88,7 +86,6 @@ const defaultVisibleColumns: Record<HttpAssetsColumnKey, boolean> = {
   createdAt: false,
   updatedAt: false,
   lastSeenAt: false,
-  actions: true,
 };
 
 interface HttpAssetsTableProps {
@@ -106,16 +103,7 @@ interface HttpAssetsTableProps {
   onSelect?: (asset: HttpAsset) => void;
   hasActiveFilters?: boolean;
   visibleColumns?: Record<HttpAssetsColumnKey, boolean>;
-}
-
-function getStatusBadgeVariant(
-  statusCode: number
-): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
-  if (statusCode >= 200 && statusCode < 300) return "success";
-  if (statusCode >= 300 && statusCode < 400) return "warning";
-  if (statusCode >= 400 && statusCode < 500) return "outline";
-  if (statusCode >= 500) return "destructive";
-  return "secondary";
+  density?: "comfortable" | "compact";
 }
 
 function TableSkeleton({
@@ -204,9 +192,6 @@ function TableSkeleton({
           {visibleColumns.lastSeenAt && (
             <TableHead className="w-[150px]"><Skeleton className="h-4 w-12" /></TableHead>
           )}
-          {visibleColumns.actions && (
-            <TableHead className="w-[90px]"><Skeleton className="h-4 w-10" /></TableHead>
-          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -251,13 +236,6 @@ function TableSkeleton({
             {visibleColumns.createdAt && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
             {visibleColumns.updatedAt && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
             {visibleColumns.lastSeenAt && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
-            {visibleColumns.actions && (
-              <TableCell>
-                <div className="flex justify-end gap-1">
-                  <Skeleton className="h-8 w-8 rounded" />
-                </div>
-              </TableCell>
-            )}
           </TableRow>
         ))}
       </TableBody>
@@ -275,6 +253,7 @@ export function HttpAssetsTable({
   onSelect,
   hasActiveFilters,
   visibleColumns,
+  density = "comfortable",
 }: HttpAssetsTableProps) {
   const resolvedVisibleColumns = React.useMemo(() => {
     return {
@@ -322,7 +301,12 @@ export function HttpAssetsTable({
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        <div
+          className={cn(
+            "overflow-x-auto",
+            density === "compact" && "[&_td]:py-1 [&_th]:h-8"
+          )}
+        >
           <Table className="table-fixed">
             <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
@@ -450,16 +434,6 @@ export function HttpAssetsTable({
                 {resolvedVisibleColumns.lastSeenAt && (
                   <TableHead className="w-[160px]">Last Seen At</TableHead>
                 )}
-                {resolvedVisibleColumns.actions && (
-                  <SortableTableHead
-                    field="actions"
-                    currentSort={sortState}
-                    onSort={(f) => onSort(f as AssetSortField)}
-                    className="w-[90px] text-center"
-                  >
-                    Actions
-                  </SortableTableHead>
-                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -468,12 +442,11 @@ export function HttpAssetsTable({
                   <motion.tr
                     key={asset.id}
                     data-slot="table-row"
-                    layout="position"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted cursor-pointer"
+                    className="group border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted cursor-pointer"
                     onClick={() => onSelect?.(asset)}
                   >
                   {resolvedVisibleColumns.id && (
@@ -488,118 +461,76 @@ export function HttpAssetsTable({
                         const assetValue = asset.assetValue || asset.url;
                         const isUrlValue = /^https?:\/\//i.test(assetValue);
                         const urlToOpen = asset.url || (isUrlValue ? assetValue : "");
-                        if (!assetValue) {
-                          return urlToOpen ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground">-</span>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-7"
-                                    asChild
-                                  >
-                                    <a
-                                      href={urlToOpen}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <ExternalLinkIcon className="size-4" />
-                                    </a>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">Open URL</TooltipContent>
-                              </Tooltip>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          );
-                        }
-                        if (!isUrlValue) {
-                          return (
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-sm text-foreground truncate max-w-[260px] block">
-                                {truncate(assetValue, 38)}
-                              </span>
-                              {urlToOpen && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="size-7"
-                                      asChild
-                                    >
-                                      <a
-                                        href={urlToOpen}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <ExternalLinkIcon className="size-4" />
-                                      </a>
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top">Open URL</TooltipContent>
-                                </Tooltip>
-                              )}
-                            </div>
-                          );
-                        }
+
+                        const openAction = urlToOpen ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-7" asChild>
+                                <a
+                                  href={urlToOpen}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLinkIcon className="size-4" />
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Open URL</TooltipContent>
+                          </Tooltip>
+                        ) : null;
+
+                        const copyAction = isUrlValue ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await navigator.clipboard.writeText(assetValue);
+                                    toast.success("Copied URL");
+                                  } catch {
+                                    toast.error("Failed to copy URL");
+                                  }
+                                }}
+                              >
+                                <CopyIcon className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Copy URL</TooltipContent>
+                          </Tooltip>
+                        ) : null;
+
+                        const label = !assetValue ? (
+                          <span className="text-muted-foreground">-</span>
+                        ) : isUrlValue ? (
+                          <a
+                            href={urlToOpen || assetValue}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-sm hover:underline text-primary truncate max-w-[240px]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {truncate(assetValue, 38)}
+                          </a>
+                        ) : (
+                          <span className="font-mono text-sm text-foreground truncate max-w-[240px] block">
+                            {truncate(assetValue, 38)}
+                          </span>
+                        );
+
                         return (
-                          <div className="flex items-center gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    try {
-                                      await navigator.clipboard.writeText(assetValue);
-                                      toast.success("Copied URL");
-                                    } catch {
-                                      toast.error("Failed to copy URL");
-                                    }
-                                  }}
-                                >
-                                  <CopyIcon className="size-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">Copy URL</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7"
-                                  asChild
-                                >
-                                  <a
-                                    href={urlToOpen || assetValue}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <ExternalLinkIcon className="size-4" />
-                                  </a>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">Open URL</TooltipContent>
-                            </Tooltip>
-                            <a
-                              href={urlToOpen || assetValue}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-mono text-sm hover:underline text-primary flex items-center gap-1 truncate max-w-[260px]"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {truncate(assetValue, 38)}
-                            </a>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {label}
+                            {(copyAction || openAction) && (
+                              <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                                {copyAction}
+                                {openAction}
+                              </span>
+                            )}
                           </div>
                         );
                       })()}
@@ -802,43 +733,69 @@ export function HttpAssetsTable({
                   )}
                   {resolvedVisibleColumns.technologies && (
                     <TableCell className="text-sm">
-                      {asset.technologies.length > 0 ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex flex-wrap gap-1">
-                              {asset.technologies.slice(0, 2).map((tech, i) => (
-                                <Badge
-                                  key={i}
-                                  variant={getTechBadgeVariant(tech) as any}
-                                  className="text-xs"
-                                >
+                      {(() => {
+                        const techs = asset.technologies
+                          .map((t) => t.trim())
+                          .filter(Boolean);
+                        if (techs.length === 0) {
+                          return <span className="text-muted-foreground">-</span>;
+                        }
+                        const visible = techs.slice(0, 2);
+                        const overflow = techs.length - visible.length;
+                        const chips = (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {visible.map((tech, i) => (
+                              <Badge
+                                key={i}
+                                variant="outline"
+                                className="gap-1.5 text-xs font-medium"
+                              >
+                                <span
+                                  className={cn(
+                                    "size-1.5 shrink-0 rounded-full",
+                                    getTechDotColor(tech)
+                                  )}
+                                />
+                                <span className="block max-w-[140px] truncate">
                                   {tech.split("/")[0]}
-                                </Badge>
-                              ))}
-                              {asset.technologies.length > 2 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  +{asset.technologies.length - 2}
-                                </Badge>
-                              )}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[300px]">
-                            <div className="flex flex-wrap gap-1">
-                              {asset.technologies.map((tech, i) => (
-                                <Badge
-                                  key={i}
-                                  variant={getTechBadgeVariant(tech) as any}
-                                  className="text-xs"
-                                >
-                                  {tech}
-                                </Badge>
-                              ))}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                                </span>
+                              </Badge>
+                            ))}
+                            {overflow > 0 && (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                +{overflow}
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                        if (overflow === 0) return chips;
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>{chips}</TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[280px] p-2">
+                              <p className="mb-1.5 px-0.5 text-[11px] font-medium text-background/60">
+                                {techs.length} technologies
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {techs.map((tech, i) => (
+                                  <span
+                                    key={i}
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-background/10 px-2 py-1 text-xs font-medium text-background"
+                                  >
+                                    <span
+                                      className={cn(
+                                        "size-1.5 shrink-0 rounded-full",
+                                        getTechDotColor(tech)
+                                      )}
+                                    />
+                                    {tech}
+                                  </span>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })()}
                     </TableCell>
                   )}
                   {resolvedVisibleColumns.responseTime && (
@@ -864,28 +821,6 @@ export function HttpAssetsTable({
                   {resolvedVisibleColumns.lastSeenAt && (
                     <TableCell className="text-xs">
                       {asset.lastSeenAt?.toLocaleString?.() ?? "-"}
-                    </TableCell>
-                  )}
-                  {resolvedVisibleColumns.actions && (
-                    <TableCell>
-                      <div className="flex justify-center">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="size-8 rounded-md"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onSelect?.(asset);
-                              }}
-                            >
-                              <EyeIcon className="size-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">View details</TooltipContent>
-                        </Tooltip>
-                      </div>
                     </TableCell>
                   )}
                   </motion.tr>

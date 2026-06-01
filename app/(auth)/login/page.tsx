@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { BookOpenIcon, GithubIcon } from "lucide-react";
+import { BookOpenIcon } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import {
   Card,
   CardContent,
