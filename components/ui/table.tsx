@@ -13,11 +13,17 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   );
 }
 
+/**
+ * The header is a hairline-ruled eyebrow, not a filled band: small uppercase
+ * labels in the faint tier, separated from the body by the full-strength
+ * border while the rows between themselves only get the subtle one. That
+ * hierarchy is what lets a 500-row table stay legible without zebra striping.
+ */
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn("[&_tr]:border-b [&_tr]:border-border", className)}
       {...props}
     />
   );
@@ -38,7 +44,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
+        "border-t border-border bg-muted/60 text-xs text-muted-foreground [&>tr]:last:border-b-0",
         className
       )}
       {...props}
@@ -51,7 +57,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b border-border-subtle transition-colors duration-150 hover:bg-sunken data-[state=selected]:bg-primary-wash",
         className
       )}
       {...props}
@@ -64,7 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-9 px-3 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&_[role=checkbox]]:translate-y-[2px]",
+        "h-9 px-3 text-left align-middle text-2xs font-normal uppercase tracking-label text-faint [&:has([role=checkbox])]:pr-0 [&_[role=checkbox]]:translate-y-[2px]",
         className
       )}
       {...props}

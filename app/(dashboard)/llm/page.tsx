@@ -560,7 +560,7 @@ export default function LLMPlaygroundPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ChatCompletionCard />
 
       <Card>

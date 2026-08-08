@@ -153,26 +153,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center">
+                <div className="flex aspect-square size-7 items-center justify-center">
                   <Image
                     src={logo}
                     alt="Osmedeus"
-                    width={32}
-                    height={32}
-                    className="size-8 logo-shadow"
+                    width={28}
+                    height={28}
+                    className="size-7 logo-shadow"
                     priority
                   />
                 </div>
-                <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
+                <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">Osmedeus</span>
+                    <span className="text-sm font-semibold">Osmedeus</span>
                     {isDemoMode() && (
                       <Badge variant="warning" className="text-[10px] px-1.5 py-0">
                         Demo
                       </Badge>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground">Dashboard</span>
+                  <span className="text-2xs uppercase tracking-label text-faint">Dashboard</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -208,10 +208,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="items-center">
-        <div className="flex items-center justify-center gap-1 px-2 py-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+      <SidebarFooter className="items-center gap-0.5 py-1">
+        <div className="flex items-center gap-1 text-2xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           <span>Crafted with</span>
-          <HeartIcon className="size-3 text-red-500" aria-label="love" />
+          <HeartIcon className="size-2.5 text-destructive" aria-label="love" />
           <span>by</span>
           <Link
             href="http://twitter.com/j3ssie"
@@ -219,14 +219,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             rel="noopener noreferrer"
             className="hover:underline"
           >
-            <code className="text-xs font-mono text-sidebar-primary">@j3ssie</code>
+            <code className="font-mono text-2xs text-sidebar-primary">@j3ssie</code>
           </Link>
         </div>
         <Button
           onClick={toggleSidebar}
-          variant="outline"
+          variant="ghost"
           size="icon-sm"
-          className="rounded-md"
           aria-label="Toggle Sidebar"
         >
           {open ? <ChevronLeftIcon className="size-3" /> : <ChevronRightIcon className="size-3" />}

@@ -36,7 +36,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
 
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
@@ -90,9 +90,9 @@ export default function DashboardPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/scans/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+              className="flex items-center gap-3 rounded-card border border-border p-4 transition-colors duration-150 hover:bg-sunken"
             >
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft">
                 <svg
                   className="size-5 text-primary"
                   fill="none"
@@ -117,9 +117,9 @@ export default function DashboardPage() {
 
             <Link
               href="/assets"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+              className="flex items-center gap-3 rounded-card border border-border p-4 transition-colors duration-150 hover:bg-sunken"
             >
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft">
                 <FolderOpenIcon className="size-5 text-primary" />
               </div>
               <div>
@@ -132,9 +132,9 @@ export default function DashboardPage() {
 
             <Link
               href="/workflows-editor"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+              className="flex items-center gap-3 rounded-card border border-border p-4 transition-colors duration-150 hover:bg-sunken"
             >
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft">
                 <WorkflowIcon className="size-5 text-primary" />
               </div>
               <div>
@@ -147,9 +147,9 @@ export default function DashboardPage() {
 
             <Link
               href="/settings"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+              className="flex items-center gap-3 rounded-card border border-border p-4 transition-colors duration-150 hover:bg-sunken"
             >
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft">
                 <svg
                   className="size-5 text-primary"
                   fill="none"

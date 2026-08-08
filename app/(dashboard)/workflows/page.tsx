@@ -39,7 +39,7 @@ import {
 import Link from "next/link";
 import { CheckIcon, ChevronsUpDownIcon, ClipboardIcon, DatabaseIcon, EyeIcon, FileCodeIcon, HardDriveIcon, RefreshCwIcon, SearchIcon, TagIcon, LayersIcon, BoxIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { toast } from "sonner";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import type { SortDirection } from "@/lib/types/asset";
 import { cn } from "@/lib/utils";
 
@@ -247,7 +247,7 @@ export default function WorkflowsListingPage() {
   }, [items, sortState.direction, sortState.field]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -594,8 +594,8 @@ export default function WorkflowsListingPage() {
                           variant="outline"
                           className={
                             wf.kind === "flow"
-                              ? "border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-300"
-                              : "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                              ? "border-transparent bg-purple-soft text-purple"
+                              : "border-transparent bg-info-soft text-info"
                           }
                         >
                           {wf.kind}

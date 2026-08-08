@@ -51,18 +51,18 @@ type FilterOption = "all" | "installed" | "not-installed";
 const getTagColor = (tag: string): string => {
   const t = tag.toLowerCase();
   if (["vuln", "scanner"].includes(t)) {
-    return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800";
+    return "bg-destructive-soft text-destructive border-transparent";
   }
   if (["recon", "subdomain", "discovery"].includes(t)) {
-    return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800";
+    return "bg-info-soft text-info border-transparent";
   }
   if (["http", "web", "url"].includes(t)) {
-    return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800";
+    return "bg-purple-soft text-purple border-transparent";
   }
   if (["network", "port", "dns"].includes(t)) {
-    return "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800";
+    return "bg-cyan-soft text-cyan border-transparent";
   }
-  return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
+  return "bg-secondary text-secondary-foreground border-transparent";
 };
 
 type RegistryRow = {
@@ -339,7 +339,7 @@ export default function RegistryPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <CardSkeleton />
         <div className="rounded-xl border bg-card p-6">
           <TableSkeleton rows={8} columns={6} />
@@ -349,7 +349,7 @@ export default function RegistryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Binary Registry Card */}
       <Card className="overflow-hidden">
         <SectionCardHeader
@@ -453,7 +453,7 @@ export default function RegistryPage() {
 
             <div className="flex items-center gap-2 text-sm">
               <Badge variant="outline" className="h-9 gap-2 px-3 text-sm font-medium">
-                <CheckCircle2Icon className="size-4 text-green-500" />
+                <CheckCircle2Icon className="size-4 text-success" />
                 {stats.installed} installed
               </Badge>
               <Badge variant="outline" className="h-9 gap-2 px-3 text-sm font-medium">
@@ -608,7 +608,7 @@ export default function RegistryPage() {
                             {tags.length > 3 && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                                className="text-xs bg-secondary text-secondary-foreground border-transparent"
                               >
                                 +{tags.length - 3}
                               </Badge>
@@ -634,7 +634,7 @@ export default function RegistryPage() {
                         {isInstalled ? (
                           <Badge
                             variant="outline"
-                            className="gap-1 border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+                            className="gap-1 border-transparent bg-success-soft text-success"
                           >
                             <CheckCircle2Icon className="size-3" />
                             Installed

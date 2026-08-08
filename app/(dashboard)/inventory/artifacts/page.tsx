@@ -482,7 +482,7 @@ export default function InventoryArtifactsPage() {
   }, [contentError, contentLoading, contentText, detailTab, loadArtifactContent, selectedArtifact]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="overflow-hidden">
         <CardHeader className="border-b bg-muted/30 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -525,8 +525,8 @@ export default function InventoryArtifactsPage() {
                   size="sm"
                   className={
                     verifyExistOnly
-                      ? "border-emerald-600 bg-emerald-600 text-emerald-50 hover:bg-emerald-700 hover:text-emerald-50 dark:border-emerald-500 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400"
-                      : "border-amber-400 bg-amber-400 text-amber-950 hover:bg-amber-500 hover:text-amber-950 dark:border-amber-300 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200"
+                      ? "border-success/40 bg-success-soft text-success hover:bg-success-soft hover:text-success"
+                      : "border-warning/40 bg-warning-soft text-warning hover:bg-warning-soft hover:text-warning"
                   }
                   onClick={() => {
                     setVerifyExistOnly((v) => !v);
@@ -1071,7 +1071,7 @@ export default function InventoryArtifactsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -4 }}
                             transition={{ duration: 0.18, ease: "easeOut" }}
-                            className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted cursor-pointer"
+                            className="cursor-pointer border-b border-border-subtle transition-colors duration-150 hover:bg-sunken data-[state=selected]:bg-primary-wash"
                             onClick={() => openDetails(a)}
                           >
                           <TableCell className="font-medium">{a.name}</TableCell>

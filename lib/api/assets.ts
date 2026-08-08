@@ -181,6 +181,19 @@ function normalizeStatsList(list: unknown): string[] {
   return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * Which workspaces a query covers: one name, several, or none at all — and none
+ * means every workspace, the same thing the old single-value `undefined` meant.
+ */
+export type WorkspaceSelection = string | string[] | undefined;
+
+function normalizeWorkspaceSelection(workspace: WorkspaceSelection): string[] {
+  const list = Array.isArray(workspace) ? workspace : workspace ? [workspace] : [];
+  return Array.from(
+    new Set(list.map((name) => String(name ?? "").trim()).filter(Boolean))
+  );
+}
+
 function resolveMockWorkspaceKey(workspace: string | undefined): string | null {
   const normalizedWorkspace = (workspace ?? "").trim();
   if (!normalizedWorkspace) return null;
@@ -191,12 +204,33 @@ function resolveMockWorkspaceKey(workspace: string | undefined): string | null {
   return null;
 }
 
-export async function fetchAssetStats(workspace?: string): Promise<AssetStats> {
+/**
+ * Mock bucket keys for a selection. An empty selection spans every bucket; a
+ * selection whose names resolve to nothing spans none, rather than silently
+ * falling back to the first workspace the way the single-value version did.
+ */
+function resolveMockWorkspaceKeys(selection: string[]): string[] {
+  if (!selection.length) return Object.keys(mockHttpAssets);
+  const keys = selection
+    .map((name) => resolveMockWorkspaceKey(name))
+    .filter((key): key is string => Boolean(key));
+  return Array.from(new Set(keys));
+}
+
+/** Mock buckets are keyed `ws-001`; rows should still name their workspace. */
+function mockWorkspaceLabel(key: string): string {
+  const id = Number(key.replace(/^ws-0*/, ""));
+  return mockWorkspaces.find((w) => w.id === id)?.name ?? key;
+}
+
+export async function fetchAssetStats(
+  workspace?: WorkspaceSelection
+): Promise<AssetStats> {
+  const selection = normalizeWorkspaceSelection(workspace);
   if (isDemoMode()) {
-    const key = resolveMockWorkspaceKey(workspace);
-    const allAssets = key
-      ? mockHttpAssets[key] ?? []
-      : Object.values(mockHttpAssets).flat();
+    const allAssets = resolveMockWorkspaceKeys(selection).flatMap(
+      (key) => mockHttpAssets[key] ?? []
+    );
     const technologies = new Set<string>();
     const sources = new Set<string>();
     const remarks = new Set<string>();
@@ -227,7 +261,7 @@ export async function fetchAssetStats(workspace?: string): Promise<AssetStats> {
       assetTypes: Array.from(assetTypes).sort((a, b) => a.localeCompare(b)),
     };
   }
-  const params = workspace ? { workspace } : undefined;
+  const params = selection.length ? { workspace: selection.join(",") } : undefined;
   const res = await http.get(`${API_PREFIX}/asset-stats`, { params });
   const data = res.data?.data ?? {};
   return {
@@ -239,10 +273,13 @@ export async function fetchAssetStats(workspace?: string): Promise<AssetStats> {
 }
 
 /**
- * Fetch HTTP assets for a workspace with filtering and pagination
+ * Fetch HTTP assets across one, several, or all workspaces, with filtering and
+ * pagination. Several workspaces go to the server as one comma-joined
+ * `workspace` param — the same shape the other multi-value filters below use —
+ * so paging stays server-side instead of stitching per-workspace responses.
  */
 export async function fetchHttpAssets(
-  workspace: string | undefined,
+  workspace: WorkspaceSelection,
   params: {
     page?: number;
     pageSize?: number;
@@ -253,19 +290,17 @@ export async function fetchHttpAssets(
   const pageSize = params.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
   const filters = params.filters ?? {};
+  const selection = normalizeWorkspaceSelection(workspace);
   if (isDemoMode()) {
-    const normalizedWorkspace = (workspace ?? "").trim();
-    const match = normalizedWorkspace
-      ? mockWorkspaces.find((w) => w.name === normalizedWorkspace) ||
-        mockWorkspaces.find((w) => w.name.toLowerCase() === normalizedWorkspace.toLowerCase())
-      : undefined;
-    const workspaceKey = match
-      ? `ws-${String(match.id).padStart(3, "0")}`
-      : normalizedWorkspace.startsWith("ws-")
-        ? normalizedWorkspace
-        : "ws-001";
-
-    const all = mockHttpAssets[workspaceKey] ?? [];
+    const all = resolveMockWorkspaceKeys(selection).flatMap((key) =>
+      (mockHttpAssets[key] ?? []).map((asset) =>
+        // The buckets store their own key as the workspace; rows need the name,
+        // which is the only way to tell workspaces apart once several are on.
+        asset.workspace === key
+          ? { ...asset, workspace: mockWorkspaceLabel(key) }
+          : asset
+      )
+    );
     const q = (filters.search ?? "").trim().toLowerCase();
     const statusSet = new Set(filters.statusCodes ?? []);
     const wantedTech = (filters.technologies ?? [])
@@ -346,7 +381,7 @@ export async function fetchHttpAssets(
     };
   }
   const query: Record<string, any> = { offset, limit: pageSize };
-  if (workspace) query.workspace = workspace;
+  if (selection.length) query.workspace = selection.join(",");
   if (filters.search) query.search = filters.search;
   if (filters.statusCodes?.length) query.status_code = filters.statusCodes.join(",");
   if (typeof filters.minContentLength === "number") query.min_content_length = filters.minContentLength;

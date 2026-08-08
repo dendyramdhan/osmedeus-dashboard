@@ -2,32 +2,33 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/**
+ * Every tone is a soft fill plus a mark that reads on it. The fills are tuned
+ * to roughly 1.2:1 against the row a chip sits in, which is quiet enough to
+ * stack a dozen of them in a table without the page turning into a christmas
+ * tree. `default` is the only solid brand variant — it spends the accent
+ * budget, so reserve it for the one thing on screen that deserves it.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1.5 rounded-pill border border-transparent px-2.5 py-[3px] text-xs leading-[1.5] whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground shadow",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow",
-        outline: "text-foreground",
-        success:
-          "border-transparent bg-green-500/15 text-green-700 dark:text-green-400",
-        warning:
-          "border-transparent bg-yellow-500/15 text-yellow-700 dark:text-yellow-400",
-        info:
-          "border-transparent bg-blue-500/15 text-blue-700 dark:text-blue-400",
-        purple:
-          "border-transparent bg-purple-500/15 text-purple-700 dark:text-purple-400",
-        pink:
-          "border-transparent bg-pink-500/15 text-pink-700 dark:text-pink-400",
-        cyan:
-          "border-transparent bg-cyan-500/15 text-cyan-700 dark:text-cyan-400",
-        orange:
-          "border-transparent bg-orange-500/15 text-orange-700 dark:text-orange-400",
+        default: "bg-primary text-primary-foreground",
+        secondary: "bg-secondary text-secondary-foreground",
+        destructive: "bg-destructive-soft text-destructive",
+        outline: "border-border text-muted-foreground",
+        success: "bg-success-soft text-success",
+        warning: "bg-warning-soft text-warning",
+        info: "bg-info-soft text-info",
+        purple: "bg-purple-soft text-purple",
+        pink: "bg-pink-soft text-pink",
+        cyan: "bg-cyan-soft text-cyan",
+        orange: "bg-orange-soft text-orange",
+        /** Accent-tinted chip — the quiet counterpart to `default`. */
+        accent: "bg-primary-soft text-primary-soft-fg",
+        /** Inverted chip, for the rare label that has to out-shout the rest. */
+        solid: "bg-foreground text-background",
       },
     },
     defaultVariants: {

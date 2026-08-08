@@ -1,7 +1,7 @@
 import WorkflowEditorClient from "@/components/workflow-editor/workflow-editor-client";
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 // server component wrapper
 

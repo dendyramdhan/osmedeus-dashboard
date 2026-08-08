@@ -152,7 +152,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Data Source */}
       <Card className="overflow-hidden">
         <SectionCardHeader
@@ -174,12 +174,12 @@ export default function SettingsPage() {
             />
           </div>
           {demoModeEnabled && (
-            <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-sm text-yellow-800 dark:text-yellow-200">
+            <div className="rounded-control border border-warning/25 bg-warning-soft p-3 text-sm text-warning">
               Demo mode is active. Data shown is sample data, not from your backend.
             </div>
           )}
           {!demoModeEnabled && (
-            <div className="rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 text-sm text-green-800 dark:text-green-200">
+            <div className="rounded-control border border-success/25 bg-success-soft p-3 text-sm text-success">
               Real API mode. Configure your backend endpoint and token below.
             </div>
           )}

@@ -76,7 +76,7 @@ export function Topbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 flex h-12 items-center justify-between gap-4 border-b border-border bg-background px-gutter text-sm">
       <div className="flex items-center gap-2">
         <Breadcrumb>
           <BreadcrumbList>
@@ -86,7 +86,7 @@ export function Topbar() {
                   {c.isCurrent ? (
                     <BreadcrumbPage className="flex items-center gap-2">
                       {c.icon && (
-                        <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <span className="inline-flex size-6 items-center justify-center rounded-control bg-primary-soft text-primary-fg">
                           <c.icon className="size-4" />
                         </span>
                       )}
@@ -101,7 +101,7 @@ export function Topbar() {
                     c.href ? (
                       <Link href={c.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                         {c.icon && (
-                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary-soft text-primary">
                             <c.icon className="size-4" />
                           </span>
                         )}
@@ -110,7 +110,7 @@ export function Topbar() {
                     ) : (
                       <span className="flex items-center gap-2 text-sm text-muted-foreground">
                         {c.icon && (
-                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary-soft text-primary">
                             <c.icon className="size-4" />
                           </span>
                         )}
@@ -132,17 +132,17 @@ export function Topbar() {
           <TooltipTrigger asChild>
             <div
               aria-label="Server status"
-              className="inline-flex items-center gap-2 px-2 py-1 rounded-md border bg-muted"
+              className="inline-flex items-center gap-2 rounded-control border border-border bg-muted px-2.5 py-1"
             >
               <span
-                className={`inline-block h-2.5 w-2.5 rounded-full ${
+                className={`inline-block size-2 rounded-full ${
                   serverUp === null
-                    ? "bg-muted-foreground"
+                    ? "bg-faint"
                     : serverUp
-                      ? "bg-green-500"
+                      ? "bg-success"
                       : demoMode
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
+                        ? "bg-warning"
+                        : "bg-destructive"
                 }`}
               />
               <span className="text-xs">
@@ -172,7 +172,7 @@ export function Topbar() {
               aria-label="Server license"
               className="inline-flex items-center gap-2 px-2 py-1 rounded-md border bg-muted"
             >
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-purple-500" />
+              <span className="inline-block size-2 rounded-full bg-purple" />
               <span className="text-xs">{serverLicense}</span>
             </div>
           </TooltipTrigger>
@@ -180,7 +180,7 @@ export function Topbar() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="size-9 rounded-md" aria-label="Open documentation" asChild>
+            <Button variant="outline" size="icon" className="size-8" aria-label="Open documentation" asChild>
               <a
                 href="https://docs.osmedeus.org/"
                 target="_blank"
@@ -194,7 +194,7 @@ export function Topbar() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="size-9 rounded-md" aria-label="Open GitHub repository" asChild>
+            <Button variant="outline" size="icon" className="size-8" aria-label="Open GitHub repository" asChild>
               <a
                 href="https://github.com/j3ssie/osmedeus"
                 target="_blank"
@@ -208,7 +208,7 @@ export function Topbar() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <ThemeToggle variant="outline" className="rounded-md" />
+            <ThemeToggle variant="outline" className="size-8" />
           </TooltipTrigger>
           <TooltipContent>Theme</TooltipContent>
         </Tooltip>
@@ -220,11 +220,11 @@ export function Topbar() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative size-9 p-0"
+                    className="relative size-8 p-0"
                     aria-label="User menu"
                   >
-                    <Avatar className="size-9 rounded-md">
-                      <AvatarFallback className="bg-muted text-muted-foreground rounded-md">
+                    <Avatar className="size-8 rounded-control">
+                      <AvatarFallback className="bg-muted text-muted-foreground rounded-control">
                         <CircleUserRound className="size-5" />
                       </AvatarFallback>
                     </Avatar>

@@ -21,14 +21,16 @@ import {
   SearchIcon,
   RotateCcwIcon,
   ChevronsUpDownIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  ArrowUpDownIcon,
 } from "lucide-react";
 import { fetchWorkspaces } from "@/lib/api/assets";
 import type { Workspace } from "@/lib/types/asset";
-import type { SortDirection } from "@/lib/types/asset";
 import { VulnerabilityDetailDialog } from "@/components/vulnerabilities/vulnerability-detail-dialog";
+import {
+  CellShell,
+  DataGrid,
+  GridPagination,
+  type GridColDef,
+} from "@/components/ui/data-grid";
 import {
   severityConfig,
   getTagColor,
@@ -68,13 +70,6 @@ const confidenceOptions: VulnerabilityConfidence[] = [
 ];
 
 export default function VulnerabilitiesPage() {
-  type VulnerabilitySortField =
-    | "severity"
-    | "confidence"
-    | "title"
-    | "asset"
-    | "tags";
-
   const [vulnerabilities, setVulnerabilities] = React.useState<Vulnerability[]>([]);
   const [summary, setSummary] = React.useState<VulnerabilitySummary | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -94,11 +89,6 @@ export default function VulnerabilitiesPage() {
     confidence?: VulnerabilityConfidence[];
   }>({});
   const [searchValue, setSearchValue] = React.useState("");
-
-  const [sortState, setSortState] = React.useState<{
-    field: VulnerabilitySortField | null;
-    direction: SortDirection;
-  }>({ field: null, direction: "asc" });
 
   const [visibleColumns, setVisibleColumns] = React.useState<Record<string, boolean>>({
     severity: true,
@@ -129,15 +119,6 @@ export default function VulnerabilitiesPage() {
       const next = { ...prev, [key]: !prev[key] };
       if (Object.values(next).some(Boolean)) return next;
       return prev;
-    });
-  }, []);
-
-  const toggleSort = React.useCallback((field: VulnerabilitySortField) => {
-    setSortState((prev) => {
-      if (prev.field === field) {
-        return { field, direction: prev.direction === "asc" ? "desc" : "asc" };
-      }
-      return { field, direction: "asc" };
     });
   }, []);
 
@@ -172,75 +153,6 @@ export default function VulnerabilitiesPage() {
     });
   }, [filters.confidence, filters.severity, vulnerabilities, searchValue]);
 
-  const sortedVulnerabilities = React.useMemo(() => {
-    if (!sortState.field) return visibleVulnerabilities;
-
-    const severityOrder: Record<VulnerabilitySeverity, number> = {
-      critical: 0,
-      high: 1,
-      medium: 2,
-      low: 3,
-      info: 4,
-    };
-
-    const getValue = (
-      field: VulnerabilitySortField,
-      v: Vulnerability
-    ): { missing: boolean; value: string | number } => {
-      switch (field) {
-        case "severity":
-          return { missing: false, value: severityOrder[v.severity] ?? 99 };
-        case "confidence":
-          return { missing: !v.confidence, value: v.confidence ?? "" };
-        case "title":
-          return { missing: !v.vulnTitle, value: v.vulnTitle ?? "" };
-        case "asset":
-          return { missing: !v.assetValue, value: v.assetValue ?? "" };
-        case "tags":
-          return {
-            missing: (v.tags ?? []).length === 0,
-            value: (v.tags ?? []).join(","),
-          };
-      }
-    };
-
-    const out = [...visibleVulnerabilities];
-    out.sort((a, b) => {
-      const av = getValue(sortState.field as VulnerabilitySortField, a);
-      const bv = getValue(sortState.field as VulnerabilitySortField, b);
-
-      if (av.missing && bv.missing) return 0;
-      if (av.missing) return 1;
-      if (bv.missing) return -1;
-
-      let cmp = 0;
-      if (typeof av.value === "number" && typeof bv.value === "number") {
-        cmp = av.value - bv.value;
-      } else {
-        cmp = String(av.value).localeCompare(String(bv.value), undefined, {
-          numeric: true,
-          sensitivity: "base",
-        });
-      }
-      return sortState.direction === "asc" ? cmp : -cmp;
-    });
-    return out;
-  }, [sortState.direction, sortState.field, visibleVulnerabilities]);
-
-  const renderSortIcon = React.useCallback(
-    (field: VulnerabilitySortField) => {
-      const isActive = sortState.field === field;
-      if (!isActive) {
-        return <ArrowUpDownIcon className="size-3.5 text-muted-foreground/50" />;
-      }
-      return sortState.direction === "asc" ? (
-        <ArrowUpIcon className="size-3.5 text-foreground" />
-      ) : (
-        <ArrowDownIcon className="size-3.5 text-foreground" />
-      );
-    },
-    [sortState.direction, sortState.field]
-  );
 
   const loadSummary = React.useCallback(async () => {
     try {
@@ -343,13 +255,114 @@ export default function VulnerabilitiesPage() {
     loadVulnerabilities();
   }, [loadVulnerabilities]);
 
-  const openDetail = (v: Vulnerability) => {
+  const openDetail = React.useCallback((v: Vulnerability) => {
     setSelected(v);
     setOpen(true);
-  };
+  }, []);
+
+  const columns = React.useMemo<GridColDef<Vulnerability>[]>(() => {
+    // Severity is an ordered scale, so it sorts by rank rather than
+    // alphabetically — "critical" before "high" before "medium".
+    const severityOrder: Record<VulnerabilitySeverity, number> = {
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+      info: 4,
+    };
+
+    const all: Array<GridColDef<Vulnerability> & { key: string }> = [
+      {
+        key: "severity",
+        colId: "severity",
+        headerName: "Severity",
+        minWidth: 110,
+        flex: 0,
+        width: 120,
+        valueGetter: (p) => severityOrder[p.data!.severity] ?? 99,
+        cellRenderer: (p: { data: Vulnerability }) => (
+          <SeverityBadge severity={p.data.severity} />
+        ),
+      },
+      {
+        key: "confidence",
+        field: "confidence",
+        headerName: "Confidence",
+        minWidth: 140,
+        flex: 0,
+        width: 170,
+        cellRenderer: (p: { value?: string }) =>
+          p.value ? (
+            <Badge variant="outline" className="text-xs">
+              {p.value}
+            </Badge>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
+        key: "title",
+        field: "vulnTitle",
+        colId: "title",
+        headerName: "Title",
+        minWidth: 220,
+        flex: 3,
+        cellRenderer: (p: { data: Vulnerability }) => (
+          <div className="flex min-w-0 flex-col justify-center leading-tight">
+            <span className="truncate font-medium">{p.data.vulnTitle || "-"}</span>
+            {p.data.vulnInfo && (
+              <span className="truncate text-xs text-muted-foreground">
+                {p.data.vulnInfo}
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "asset",
+        field: "assetValue",
+        colId: "asset",
+        headerName: "Asset",
+        minWidth: 200,
+        flex: 2,
+        cellClass: "font-mono text-xs text-muted-foreground",
+        valueFormatter: (p) => p.value || "-",
+      },
+      {
+        key: "tags",
+        colId: "tags",
+        headerName: "Tags",
+        minWidth: 160,
+        flex: 2,
+        valueGetter: (p) => (p.data?.tags ?? []).join(","),
+        cellRenderer: (p: { data: Vulnerability }) => {
+          const tags = p.data.tags ?? [];
+          if (tags.length === 0) return <span className="text-muted-foreground">-</span>;
+          return (
+            <CellShell className="gap-1">
+              {tags.slice(0, 3).map((tag, i) => (
+                <Badge key={i} variant="outline" className={`text-xs ${getTagColor(tag)}`}>
+                  {tag}
+                </Badge>
+              ))}
+              {tags.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{tags.length - 3}
+                </Badge>
+              )}
+            </CellShell>
+          );
+        },
+      },
+    ];
+
+    return all
+      .filter((c) => visibleColumns[c.key])
+      .map(({ key: _key, ...col }) => col);
+  }, [visibleColumns]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Compact Severity Summary */}
       <div className="rounded-lg border bg-card p-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -601,187 +614,24 @@ export default function VulnerabilitiesPage() {
             </Select>
           </div>
 
-          {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Loading...
-            </div>
-          ) : visibleVulnerabilities.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              No vulnerabilities found
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    {visibleColumns.severity && (
-                      <th className="p-2 text-left">
-                        <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("severity")}>
-                          <span>Severity</span>
-                          {renderSortIcon("severity")}
-                        </button>
-                      </th>
-                    )}
-                    {visibleColumns.confidence && (
-                      <th className="p-2 text-left">
-                        <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("confidence")}>
-                          <span>Confidence</span>
-                          {renderSortIcon("confidence")}
-                        </button>
-                      </th>
-                    )}
-                    {visibleColumns.title && (
-                      <th className="p-2 text-left">
-                        <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("title")}>
-                          <span>Title</span>
-                          {renderSortIcon("title")}
-                        </button>
-                      </th>
-                    )}
-                    {visibleColumns.asset && (
-                      <th className="p-2 text-left">
-                        <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("asset")}>
-                          <span>Asset</span>
-                          {renderSortIcon("asset")}
-                        </button>
-                      </th>
-                    )}
-                    {visibleColumns.tags && (
-                      <th className="p-2 text-left">
-                        <button type="button" className="flex items-center gap-1" onClick={() => toggleSort("tags")}>
-                          <span>Tags</span>
-                          {renderSortIcon("tags")}
-                        </button>
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedVulnerabilities.map((v) => (
-                    <tr
-                      key={v.id}
-                      className="border-b cursor-pointer transition-colors hover:bg-muted/50"
-                      onClick={() => openDetail(v)}
-                    >
-                      {visibleColumns.severity && (
-                        <td className="p-2">
-                          <SeverityBadge severity={v.severity} />
-                        </td>
-                      )}
-                      {visibleColumns.confidence && (
-                        <td className="p-2">
-                          {v.confidence ? (
-                            <Badge variant="outline" className="text-xs">
-                              {v.confidence}
-                            </Badge>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                      )}
-                      {visibleColumns.title && (
-                        <td className="p-2">
-                          <div className="max-w-[300px]">
-                            <p className="font-medium truncate">{v.vulnTitle || "-"}</p>
-                            {v.vulnInfo && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {v.vulnInfo}
-                              </p>
-                            )}
-                          </div>
-                        </td>
-                      )}
-                      {visibleColumns.asset && (
-                        <td className="p-2">
-                          <span className="font-mono text-xs text-muted-foreground max-w-[200px] truncate block">
-                            {v.assetValue || "-"}
-                          </span>
-                        </td>
-                      )}
-                      {visibleColumns.tags && (
-                        <td className="p-2">
-                          <div className="flex flex-wrap gap-1 max-w-[150px]">
-                            {v.tags.slice(0, 3).map((tag, i) => (
-                              <Badge key={i} variant="outline" className={`text-xs ${getTagColor(tag)}`}>
-                                {tag}
-                              </Badge>
-                            ))}
-                            {v.tags.length > 3 && (
-                              <Badge variant="outline" className="text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
-                                +{v.tags.length - 3}
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <DataGrid<Vulnerability>
+            rows={visibleVulnerabilities}
+            columns={columns}
+            getRowId={(v) => String(v.id)}
+            loading={loading}
+            onRowClick={openDetail}
+            emptyState={
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                No vulnerabilities found
+              </div>
+            }
+          />
 
-              {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between px-2 py-3">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(pagination.page - 1) * pagination.pageSize + 1} to{" "}
-                    {Math.min(
-                      pagination.page * pagination.pageSize,
-                      pagination.totalItems
-                    )}{" "}
-                    of {pagination.totalItems.toLocaleString()} results
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={pagination.page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from(
-                        { length: Math.min(5, pagination.totalPages) },
-                        (_, i) => {
-                          let pageNum: number;
-                          if (pagination.totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (pagination.page <= 3) {
-                            pageNum = i + 1;
-                          } else if (pagination.page >= pagination.totalPages - 2) {
-                            pageNum = pagination.totalPages - 4 + i;
-                          } else {
-                            pageNum = pagination.page - 2 + i;
-                          }
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={
-                                pagination.page === pageNum ? "default" : "outline"
-                              }
-                              size="sm"
-                              className="w-9"
-                              onClick={() => setPage(pageNum)}
-                            >
-                              {pageNum}
-                            </Button>
-                          );
-                        }
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setPage((p) => Math.min(p + 1, pagination.totalPages))
-                      }
-                      disabled={pagination.page >= pagination.totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {pagination && (
+            <GridPagination
+              pagination={pagination}
+              onPageChange={setPage}
+            />
           )}
         </CardContent>
       </Card>

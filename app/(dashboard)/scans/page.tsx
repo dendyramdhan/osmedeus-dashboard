@@ -200,10 +200,10 @@ export default function ScansPage() {
     const status = (filters.status || "all").toLowerCase();
     const map: Record<string, { trigger: string; dot: string }> = {
       all: { trigger: "border-muted-foreground/30", dot: "bg-muted-foreground/50" },
-      pending: { trigger: "border-yellow-400/50 text-yellow-700 dark:text-yellow-300", dot: "bg-yellow-500" },
-      running: { trigger: "border-sky-400/50 text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
-      completed: { trigger: "border-emerald-400/50 text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-      failed: { trigger: "border-red-400/50 text-red-700 dark:text-red-300", dot: "bg-red-500" },
+      pending: { trigger: "border-warning/50 text-warning", dot: "bg-warning" },
+      running: { trigger: "border-info/50 text-info", dot: "bg-info" },
+      completed: { trigger: "border-success/50 text-success", dot: "bg-success" },
+      failed: { trigger: "border-destructive/50 text-destructive", dot: "bg-destructive" },
       cancelled: { trigger: "border-muted-foreground/40 text-muted-foreground", dot: "bg-muted-foreground" },
     };
     return map[status] ?? map.all;
@@ -236,9 +236,9 @@ export default function ScansPage() {
         className: string;
       }
     > = {
-      high: { label: "High", className: "border-red-400/50 text-red-700 dark:text-red-300" },
-      medium: { label: "Medium", className: "border-amber-400/50 text-amber-700 dark:text-amber-300" },
-      low: { label: "Low", className: "border-emerald-400/50 text-emerald-700 dark:text-emerald-300" },
+      high: { label: "High", className: "border-destructive/50 text-destructive" },
+      medium: { label: "Medium", className: "border-warning/50 text-warning" },
+      low: { label: "Low", className: "border-success/50 text-success" },
     };
     return conf;
   }, []);
@@ -341,7 +341,7 @@ export default function ScansPage() {
   }, [selectedScan]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Filters */}
       <Card className="overflow-hidden">
         <SectionCardHeader
@@ -358,7 +358,7 @@ export default function ScansPage() {
           }
         />
         <CardContent>
-          <div className="flex flex-wrap gap-3 py-2">
+          <div className="flex flex-wrap gap-2">
             <Input
               placeholder="Search"
               value={tableSearch}
@@ -389,26 +389,26 @@ export default function ScansPage() {
                   </span>
                 </SelectItem>
                 <SelectItem value="pending">
-                  <span className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
-                    <span className="size-2 rounded-full bg-yellow-500" />
+                  <span className="flex items-center gap-2 text-warning">
+                    <span className="size-2 rounded-full bg-warning" />
                     Pending
                   </span>
                 </SelectItem>
                 <SelectItem value="running">
-                  <span className="flex items-center gap-2 text-sky-700 dark:text-sky-300">
-                    <span className="size-2 rounded-full bg-sky-500" />
+                  <span className="flex items-center gap-2 text-info">
+                    <span className="size-2 rounded-full bg-info" />
                     Running
                   </span>
                 </SelectItem>
                 <SelectItem value="completed">
-                  <span className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-                    <span className="size-2 rounded-full bg-emerald-500" />
+                  <span className="flex items-center gap-2 text-success">
+                    <span className="size-2 rounded-full bg-success" />
                     Completed
                   </span>
                 </SelectItem>
                 <SelectItem value="failed">
-                  <span className="flex items-center gap-2 text-red-700 dark:text-red-300">
-                    <span className="size-2 rounded-full bg-red-500" />
+                  <span className="flex items-center gap-2 text-destructive">
+                    <span className="size-2 rounded-full bg-destructive" />
                     Failed
                   </span>
                 </SelectItem>
@@ -594,7 +594,7 @@ export default function ScansPage() {
                         className={cn(
                           "space-y-1 rounded-md border border-transparent px-2 py-1.5 transition-colors",
                           item.key === "runUuid"
-                            ? "cursor-pointer hover:border-primary/30 hover:bg-primary/5"
+                            ? "cursor-pointer hover:border-primary/30 hover:bg-primary-soft"
                             : "hover:border-muted-foreground/10"
                         )}
                         onClick={async () => {
@@ -645,7 +645,7 @@ export default function ScansPage() {
                             <span className="text-sm text-muted-foreground">-</span>
                           )
                         ) : item.key === "errorMessage" ? (
-                          <div className="rounded-md border border-destructive/20 bg-destructive/5 px-2 py-1 font-mono text-destructive break-all">
+                          <div className="rounded-md border border-destructive/20 bg-destructive-soft px-2 py-1 font-mono text-destructive break-all">
                             {item.value}
                           </div>
                         ) : (
@@ -733,7 +733,7 @@ export default function ScansPage() {
                     {isStepsLoading ? (
                       <TableSkeleton rows={3} columns={3} />
                     ) : stepsError ? (
-                      <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      <div className="rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive">
                         {stepsError}
                       </div>
                     ) : stepResults.length === 0 ? (
@@ -844,7 +844,7 @@ export default function ScansPage() {
                               {step.error ? (
                                 <div className="mt-3 space-y-1">
                                   <div className="text-xs text-muted-foreground">Error</div>
-                                  <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 font-mono text-xs text-destructive whitespace-pre-wrap break-words">
+                                  <div className="rounded-md border border-destructive/30 bg-destructive-soft p-2 font-mono text-xs text-destructive whitespace-pre-wrap break-words">
                                     {step.error}
                                   </div>
                                 </div>

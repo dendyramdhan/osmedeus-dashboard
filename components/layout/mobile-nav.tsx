@@ -100,9 +100,9 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-72 p-0">
-        <SheetHeader className="border-b px-6 py-4">
+        <SheetHeader className="border-b border-border px-gutter py-4">
           <SheetTitle className="flex items-center gap-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
+            <div className="flex size-8 items-center justify-center rounded-control bg-primary">
               <ShieldIcon className="size-5 text-primary-foreground" />
             </div>
             <Link href="/" onClick={() => onOpenChange(false)} aria-label="Go home">
@@ -124,10 +124,10 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
                   href={item.href}
                   onClick={() => onOpenChange(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-control px-3 py-2.5 text-sm transition-colors duration-150",
                     active
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <item.icon

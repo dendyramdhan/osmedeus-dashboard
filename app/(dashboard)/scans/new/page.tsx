@@ -606,8 +606,8 @@ export default function NewScanPage() {
             </div>
 
             {runMode === "cloud" && (
-              <div className="space-y-4 rounded-lg border border-sky-200/70 bg-sky-50/40 p-4 dark:border-sky-900/60 dark:bg-sky-950/20">
-                <span className="inline-flex items-center gap-2 text-xs font-medium text-sky-700 dark:text-sky-300">
+              <div className="space-y-4 rounded-card border border-info/25 bg-info-soft/40 p-4">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-info">
                   <CloudIcon className="size-4" />
                   Cloud Configuration
                 </span>
@@ -965,10 +965,10 @@ export default function NewScanPage() {
 
             <div className="space-y-4 pt-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center justify-between gap-4 min-w-[240px] rounded-lg border border-sky-200/70 bg-sky-50/60 px-3 py-2 dark:border-sky-900/60 dark:bg-sky-950/25">
+                <div className="flex min-w-[240px] items-center justify-between gap-4 rounded-card border border-info/25 bg-info-soft/50 px-3 py-2">
                   <div className="space-y-0.5">
-                    <Label htmlFor="schedule" className="flex items-center gap-2 text-sky-900 dark:text-sky-100">
-                      <CalendarClockIcon className="size-4 text-sky-500 dark:text-sky-400" />
+                    <Label htmlFor="schedule" className="flex items-center gap-2 text-info">
+                      <CalendarClockIcon className="size-4 text-info" />
                       Enable Scheduling
                     </Label>
                     <p className="text-xs text-muted-foreground">
@@ -979,7 +979,7 @@ export default function NewScanPage() {
                     id="schedule"
                     checked={enableSchedule}
                     onCheckedChange={setEnableSchedule}
-                    className="data-[state=checked]:bg-sky-500 data-[state=unchecked]:bg-sky-200/70 dark:data-[state=unchecked]:bg-sky-950/50 [&_[data-slot=switch-thumb]]:!bg-white"
+                    className="data-[state=checked]:bg-info data-[state=unchecked]:bg-info-soft [&_[data-slot=switch-thumb]]:!bg-white"
                   />
                 </div>
 
@@ -999,8 +999,8 @@ export default function NewScanPage() {
                     disabled={isSubmitting || isLoadingData}
                     className={`rounded-full ${
                       enableSchedule
-                        ? "bg-sky-500 text-white hover:bg-sky-600 hover:shadow-[0_0_20px_rgba(14,165,233,0.30)]"
-                        : "border-yellow-500 text-yellow-700 hover:bg-yellow-500/10 hover:border-yellow-500 hover:shadow-[0_0_15px_rgba(234,179,8,0.35)] dark:border-yellow-400 dark:text-yellow-400 dark:hover:bg-yellow-400/10"
+                        ? "border-info bg-info text-background"
+                        : "border-warning/50 text-warning hover:bg-warning-soft"
                     }`}
                   >
                     {isSubmitting ? (

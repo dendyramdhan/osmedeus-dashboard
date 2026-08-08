@@ -43,6 +43,17 @@ The workflow editor at `/workflows/[id]` visualizes YAML workflows using React F
 - `components/workflow-editor/nodes/` - Custom node types: bash, parallel, function, foreach, start, end
 - Workflow types defined in `lib/types/workflow.ts`
 
+### Data Tables
+Row-heavy tables run on AG Grid (`ag-grid-community` + `ag-grid-react`) through the single wrapper in `components/ui/data-grid.tsx`, which registers the community modules once, exports `DataGrid` / `GridPagination` / `GridRefreshOverlay` plus shared cell renderers, and defines `osmedeusGridTheme` — a `themeQuartz.withParams({...})` whose every value is a `var(--…)` from `app/globals.css`, so the grid follows light/dark without a remount.
+
+On AG Grid: HTTP assets, workspaces, scans, vulnerabilities, events. Still on the plain `Table` primitive: registry, artifacts, schedules. Reach for `DataGrid` for anything that can grow past ~50 rows; the `Table` primitive is fine for short, bespoke layouts.
+
+Notes when working on grids:
+- AG Grid params must reference emitted variables (`var(--wash-primary)`), not Tailwind `@theme inline` aliases (`--color-primary-wash`), which are substituted into utilities rather than emitted.
+- Pass `rowHeight` as a `DataGrid` prop, not through the spread, so the auto-height calculation matches the real row height.
+- Assets and workspaces sort server-side (comparators return `0`, `onSortChanged` reports the clicked column); everything else sorts in the grid via per-column comparators.
+- Columns fill the grid width through `flex`, which `defaultColDef` sets to `1`: a column opts out with `flex: 0` plus an explicit `width` (status chips, action buttons), and everything else splits the remainder by its `flex` with `minWidth` as the floor. AG Grid 35 silently ignored `flex` — 36 resolves it — so a table that ends short of the card edge means the version regressed, not that the column defs are wrong.
+
 ### Component Organization
 - `components/ui/` - Shadcn primitives (do not edit directly, use `bunx shadcn@latest add`)
 - `components/layout/` - App shell (sidebar, topbar, mobile nav)
@@ -51,6 +62,12 @@ The workflow editor at `/workflows/[id]` visualizes YAML workflows using React F
 
 ### Theming
 Tailwind CSS v4 with CSS variables defined in `app/globals.css` — the single source of truth for the color palette (light `:root` and `.dark`). Theme switching via `next-themes` in `providers/theme-provider.tsx`.
+
+Two layers of tokens:
+1. `--og-*` — the raw design tokens (surfaces, text ladder, tone marks and their soft fills, chart ramps, radii). Light is a warm paper palette (cream planes, warm greys, an electric-blue primary); dark is warm greys on a near-black page with a mid-blue primary. They are not inverses of each other.
+2. The Shadcn semantic names (`--background`, `--card`, `--primary`, …) derived from layer 1, so every Shadcn component keeps working and `providers/color-vars-provider.tsx` can still override the palette at runtime from a stored preset.
+
+Prefer the Shadcn spelling in components. Reach for the `--og`-only utilities only where Shadcn has no equivalent: `bg-page/surface/raised/sunken`, `text-ink/body/faint`, `border-border-subtle/strong`, `bg-<tone>-soft` + `text-<tone>` chips, `*-wash` row tints, `viz-*`/`seq-*`, `shadow-glow`, `rounded-{frame,card,control,pill}`, `px-gutter`, `tracking-label`, `text-2xs`/`text-md`. Do not introduce raw Tailwind palette colours (`text-green-500`, `bg-red-100`, …) — the codebase has none.
 
 ## Key Files
 

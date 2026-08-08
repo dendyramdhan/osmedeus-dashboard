@@ -3,7 +3,7 @@ import { API_PREFIX } from "@/lib/api/prefix";
 import { isDemoMode, setDemoMode } from "./demo-mode";
 import type { Workflow } from "@/lib/types/workflow";
 import { MOCK_WORKFLOW_YAMLS } from "@/lib/mock/workflow-yamls";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 function getCustomMockYamls(): Record<string, string> {
   if (typeof window === "undefined") return {};

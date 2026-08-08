@@ -9,16 +9,19 @@ import {
   BanIcon,
 } from "lucide-react";
 
+// `running` takes the accent-tinted chip rather than the solid one: a table of
+// scans can have a dozen of these at once, and a dozen solid primary fills
+// spend the whole accent budget on status.
 const statusConfig: Record<
   ScanStatus,
   {
     label: string;
-    variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning";
+    variant: "accent" | "secondary" | "destructive" | "outline" | "success" | "warning";
     icon: React.ElementType;
   }
 > = {
   completed: { label: "Completed", variant: "success", icon: CheckCircleIcon },
-  running: { label: "Running", variant: "default", icon: LoaderIcon },
+  running: { label: "Running", variant: "accent", icon: LoaderIcon },
   pending: { label: "Pending", variant: "secondary", icon: ClockIcon },
   failed: { label: "Failed", variant: "destructive", icon: XCircleIcon },
   cancelled: { label: "Cancelled", variant: "outline", icon: BanIcon },

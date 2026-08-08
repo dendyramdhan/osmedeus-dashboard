@@ -52,7 +52,7 @@ export default function WorkflowEditorClient({ workflowId }: WorkflowEditorClien
   const [hideMiniMap, setHideMiniMap] = React.useState<boolean>(true);
 
   const toolbarButtonClassName =
-    "border-sky-400 text-sky-700 hover:bg-sky-500/10 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-300/15";
+    "border-info/40 text-info hover:bg-info-soft hover:text-info";
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;

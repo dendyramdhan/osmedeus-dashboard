@@ -239,7 +239,7 @@ export default function WorkspaceDetailClient({ workspaceId }: WorkspaceDetailCl
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardContent className="flex items-center gap-4 pt-6">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex size-12 items-center justify-center rounded-lg bg-primary-soft">
                 <GlobeIcon className="size-6 text-primary" />
               </div>
               <div>
@@ -251,7 +251,7 @@ export default function WorkspaceDetailClient({ workspaceId }: WorkspaceDetailCl
 
           <Card>
             <CardContent className="flex items-center gap-4 pt-6">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex size-12 items-center justify-center rounded-lg bg-primary-soft">
                 <LinkIcon className="size-6 text-primary" />
               </div>
               <div>
@@ -263,7 +263,7 @@ export default function WorkspaceDetailClient({ workspaceId }: WorkspaceDetailCl
 
           <Card>
             <CardContent className="flex items-center gap-4 pt-6">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-destructive/10">
+              <div className="flex size-12 items-center justify-center rounded-lg bg-destructive-soft">
                 <AlertTriangleIcon className="size-6 text-destructive" />
               </div>
               <div className="flex items-center gap-2">

@@ -23,17 +23,20 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <Card className={cn("p-6 transition-shadow hover:shadow-md", className)}>
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold">{value}</p>
+    <Card className={cn("glow-card gap-0 p-5", className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          {/* Eyebrow label, figure, foot — the number is the only thing on the
+              tile allowed to be large, so a row of tiles scans as a row of
+              numbers rather than a row of headings. */}
+          <p className="text-2xs uppercase tracking-label text-faint">{title}</p>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <p className="font-figure text-3xl leading-[1.1] text-foreground">{value}</p>
             {trend && (
               <span
                 className={cn(
-                  "text-xs font-medium",
-                  trend.isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                  "text-xs",
+                  trend.isPositive ? "text-success" : "text-destructive"
                 )}
               >
                 {trend.isPositive ? "+" : "-"}{Math.abs(trend.value)}%
@@ -41,11 +44,13 @@ export function StatCard({
             )}
           </div>
           {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           )}
         </div>
-        <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="size-6 text-primary" />
+        {/* The icon is wayfinding, not data — kept neutral so the accent budget
+            stays with the one primary action on the page. */}
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-control bg-muted text-muted-foreground">
+          <Icon className="size-4" />
         </div>
       </div>
     </Card>

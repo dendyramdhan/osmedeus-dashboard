@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import type { Node, Edge } from "@xyflow/react";
 import type {
   WorkflowYaml,
@@ -472,7 +472,7 @@ export function serializeWorkflowToYaml(workflow: WorkflowYaml): string {
     indent: 2,
     lineWidth: -1,
     noRefs: true,
-    quotingType: '"',
+    quoteStyle: "double",
   });
 }
 

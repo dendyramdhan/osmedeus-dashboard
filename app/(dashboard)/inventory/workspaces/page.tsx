@@ -108,7 +108,7 @@ export default function InventoryWorkspacesPage() {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="overflow-hidden">
         <CardHeader className="border-b bg-muted/30 py-4">
           <div className="flex flex-col gap-3">

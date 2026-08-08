@@ -30,7 +30,7 @@ import github from "react-syntax-highlighter/dist/esm/styles/hljs/github";
 import atomOneDark from "react-syntax-highlighter/dist/esm/styles/hljs/atom-one-dark";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import jsyaml from "js-yaml";
+import * as jsyaml from "js-yaml";
 
 interface WorkflowSidebarProps {
   selectedStep: WorkflowStep | null;
@@ -189,7 +189,7 @@ export function WorkflowSidebar({
         indent: 2,
         lineWidth: -1,
         noRefs: true,
-        quotingType: '"',
+        quoteStyle: "double",
       });
     } catch {
       return "";
@@ -989,7 +989,7 @@ export function WorkflowSidebar({
                               indent: 2,
                               lineWidth: -1,
                               noRefs: true,
-                              quotingType: '"',
+                              quoteStyle: "double",
                             });
                           } catch {
                             psYaml = "";

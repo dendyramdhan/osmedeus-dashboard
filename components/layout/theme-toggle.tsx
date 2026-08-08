@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 type Variant = "default" | "outline" | "ghost";
 type Size = "sm" | "icon";
 
+/** Matches the transition duration declared for `[data-theme-transition]`. */
+const THEME_TRANSITION_MS = 220;
+
 export function ThemeToggle({
   variant = "ghost",
   size = "icon",
@@ -23,10 +26,26 @@ export function ThemeToggle({
 }) {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  const transitionTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   React.useEffect(() => {
     setMounted(true);
+    return () => clearTimeout(transitionTimer.current);
   }, []);
+
+  // Cross-fade the palette swap. The attribute is only set for the length of
+  // the transition — a permanent global colour transition would fight every
+  // other animation on the page.
+  const toggle = React.useCallback(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-theme-transition", "");
+    clearTimeout(transitionTimer.current);
+    transitionTimer.current = setTimeout(
+      () => root.removeAttribute("data-theme-transition"),
+      THEME_TRANSITION_MS
+    );
+    setTheme(theme === "dark" ? "light" : "dark");
+  }, [setTheme, theme]);
 
   if (!mounted) {
     return (
@@ -43,7 +62,7 @@ export function ThemeToggle({
       size={size}
       className={className}
       aria-label={ariaLabel}
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={toggle}
     >
       {theme === "dark" ? (
         <MoonIcon className="size-4" />

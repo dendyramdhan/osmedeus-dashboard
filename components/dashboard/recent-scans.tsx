@@ -70,7 +70,7 @@ export function RecentScans() {
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4">
-                <Skeleton className="size-10 rounded-lg" />
+                <Skeleton className="size-9 rounded-control" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-1/3" />
                   <Skeleton className="h-3 w-1/2" />
@@ -100,15 +100,15 @@ export function RecentScans() {
                 <Link
                   key={scan.id}
                   href={`/scans`}
-                  className="flex items-center gap-4 rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
+                  className="-mx-2 flex items-center gap-4 rounded-control p-2 transition-colors duration-150 hover:bg-sunken"
                 >
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                  <div className="flex size-9 items-center justify-center rounded-control bg-muted">
                     <StatusIcon
                       className={`size-5 ${
                         scan.status === "running" ? "animate-spin" : ""
                       } ${
                         scan.status === "completed"
-                          ? "text-green-600 dark:text-green-400"
+                          ? "text-success"
                           : scan.status === "failed"
                           ? "text-destructive"
                           : "text-muted-foreground"

@@ -62,7 +62,7 @@ export default function WorkflowUploadPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
       <Card className="max-w-2xl">
         <CardHeader>

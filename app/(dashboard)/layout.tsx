@@ -85,7 +85,7 @@ export default function DashboardLayout({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="w-full max-w-none p-4 lg:p-6"
+              className="w-full max-w-none p-2.5 lg:px-gutter lg:py-2.5"
             >
               {children}
             </motion.div>

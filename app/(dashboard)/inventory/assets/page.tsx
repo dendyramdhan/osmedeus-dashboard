@@ -15,15 +15,22 @@ import type {
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionCardHeader } from "@/components/shared/section-card-header";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCcwIcon, Rows3Icon, Rows4Icon } from "lucide-react";
+import {
+  ChevronsUpDownIcon,
+  FolderOpenIcon,
+  RefreshCcwIcon,
+  Rows3Icon,
+  Rows4Icon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AssetFilters } from "@/components/assets/asset-filters";
 import {
@@ -31,16 +38,26 @@ import {
   type HttpAssetsColumnKey,
 } from "@/components/assets/http-assets-table";
 import { AssetDetailDialog } from "@/components/assets/asset-detail-dialog";
-import { sortAssets, STATUS_BANDS } from "@/lib/utils";
+import { cn, sortAssets, STATUS_BANDS } from "@/lib/utils";
 
 export default function InventoryAssetsPage() {
   const searchParams = useSearchParams();
   const workspaceParam = (searchParams.get("workspace") ?? "").trim();
 
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = React.useState<string>(() =>
-    workspaceParam ? workspaceParam : "all"
+  // Workspace ids, or empty for every workspace. `?workspace=` accepts a
+  // comma-separated list so a multi-workspace view stays linkable, and a single
+  // value still works the way it did when this was a one-of-many select.
+  const [selectedWorkspaces, setSelectedWorkspaces] = React.useState<string[]>(
+    () =>
+      workspaceParam
+        ? workspaceParam
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean)
+        : []
   );
+  const [workspaceSearch, setWorkspaceSearch] = React.useState("");
   const [assetsResponse, setAssetsResponse] =
     React.useState<PaginatedResponse<HttpAsset> | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -106,31 +123,77 @@ export default function InventoryAssetsPage() {
     loadWs();
   }, []);
 
+  // A `?workspace=` value can arrive as a name; once the list is in, swap any
+  // such entry for its id so the checkboxes below match on identity.
   React.useEffect(() => {
-    if (!workspaces.length) return;
-    if (!selectedWorkspace || selectedWorkspace === "all") return;
-    const matchById = workspaces.find(
-      (w) => String(w.id) === selectedWorkspace
+    if (!workspaces.length || !selectedWorkspaces.length) return;
+    let changed = false;
+    const resolved = selectedWorkspaces.map((entry) => {
+      if (workspaces.some((w) => String(w.id) === entry)) return entry;
+      const byName =
+        workspaces.find((w) => w.name === entry) ||
+        workspaces.find((w) => w.name.toLowerCase() === entry.toLowerCase());
+      if (!byName) return entry;
+      changed = true;
+      return String(byName.id);
+    });
+    if (changed) setSelectedWorkspaces(Array.from(new Set(resolved)));
+  }, [workspaces, selectedWorkspaces]);
+
+  // Names are what the API filters on; an empty list means every workspace.
+  const effectiveWorkspaces = React.useMemo(
+    () =>
+      selectedWorkspaces.map(
+        (id) => workspaces.find((w) => String(w.id) === id)?.name ?? id
+      ),
+    [selectedWorkspaces, workspaces]
+  );
+  const workspaceFilterKey = effectiveWorkspaces.join(",");
+
+  const selectedWorkspaceNames = React.useMemo(
+    () =>
+      selectedWorkspaces
+        .map((id) => workspaces.find((w) => String(w.id) === id)?.name)
+        .filter((name): name is string => Boolean(name)),
+    [selectedWorkspaces, workspaces]
+  );
+
+  const toggleWorkspace = React.useCallback((id: string) => {
+    setSelectedWorkspaces((prev) =>
+      prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]
     );
-    if (matchById) return;
-    const matchByName =
-      workspaces.find((w) => w.name === selectedWorkspace) ||
-      workspaces.find(
-        (w) => w.name.toLowerCase() === selectedWorkspace.toLowerCase()
+    setPage(1);
+    forceNextRef.current = true;
+  }, []);
+
+  // Rows from several workspaces are indistinguishable without the column that
+  // names them, so it comes along on the way into a multi-workspace view —
+  // whether that came from the checkboxes or straight from `?workspace=`. Only
+  // on the crossing, and never forced back off: hiding it again is the reader's
+  // call, and re-showing it on every render would overrule them.
+  const multiWorkspaceRef = React.useRef(false);
+  React.useEffect(() => {
+    const multi = selectedWorkspaces.length > 1;
+    if (multi && !multiWorkspaceRef.current) {
+      setVisibleColumns((columns) =>
+        columns.workspace ? columns : { ...columns, workspace: true }
       );
-    if (!matchByName) return;
-    setSelectedWorkspace(String(matchByName.id));
-  }, [workspaces, selectedWorkspace]);
+    }
+    multiWorkspaceRef.current = multi;
+  }, [selectedWorkspaces]);
+
+  const filteredWorkspaces = React.useMemo(() => {
+    const query = workspaceSearch.trim().toLowerCase();
+    if (!query) return workspaces;
+    return workspaces.filter((ws) => ws.name.toLowerCase().includes(query));
+  }, [workspaceSearch, workspaces]);
 
   React.useEffect(() => {
     const loadStats = async () => {
       try {
-        const effectiveWorkspace =
-          selectedWorkspace === "all"
-            ? undefined
-            : (workspaces.find((w) => String(w.id) === selectedWorkspace)?.name ??
-              selectedWorkspace);
-        const stats = await fetchAssetStats(effectiveWorkspace);
+        const stats = await fetchAssetStats(
+          workspaceFilterKey ? workspaceFilterKey.split(",") : undefined
+        );
         setAssetStats(stats);
       } catch (e) {
         toast.error("Failed to load asset statistics", {
@@ -139,7 +202,7 @@ export default function InventoryAssetsPage() {
       }
     };
     loadStats();
-  }, [selectedWorkspace, workspaces]);
+  }, [workspaceFilterKey]);
 
   const loadAssets = React.useCallback(
     async (force?: boolean) => {
@@ -147,16 +210,14 @@ export default function InventoryAssetsPage() {
       if (!force && now - lastFetchRef.current < COOLDOWN_MS) return;
       try {
         setIsLoading(true);
-        const effectiveWorkspace =
-          selectedWorkspace === "all"
-            ? undefined
-            : (workspaces.find((w) => String(w.id) === selectedWorkspace)?.name ??
-              selectedWorkspace);
-        const res = await fetchHttpAssets(effectiveWorkspace, {
-          page,
-          pageSize,
-          filters,
-        });
+        const res = await fetchHttpAssets(
+          workspaceFilterKey ? workspaceFilterKey.split(",") : undefined,
+          {
+            page,
+            pageSize,
+            filters,
+          }
+        );
         const tp = res.pagination?.totalPages ?? 0;
         if (tp > 0 && page > tp) {
           setPage(tp);
@@ -173,7 +234,7 @@ export default function InventoryAssetsPage() {
         setIsLoading(false);
       }
     },
-    [selectedWorkspace, page, pageSize, filters, workspaces]
+    [workspaceFilterKey, page, pageSize, filters]
   );
 
   React.useEffect(() => {
@@ -342,7 +403,7 @@ export default function InventoryAssetsPage() {
   }, [filters]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Main Content Card */}
       <Card className="overflow-hidden">
         <SectionCardHeader
@@ -354,13 +415,17 @@ export default function InventoryAssetsPage() {
                   {assetsResponse.pagination.totalItems.toLocaleString()}
                 </span>{" "}
                 assets found
-                {selectedWorkspace !== "all" && (
+                {selectedWorkspaces.length > 0 && (
                   <>
                     {" "}
                     in{" "}
                     <span className="font-medium text-foreground">
-                      {workspaces.find((w) => String(w.id) === selectedWorkspace)
-                        ?.name ?? selectedWorkspace}
+                      {selectedWorkspaces.length <= 2
+                        ? (selectedWorkspaceNames.length
+                            ? selectedWorkspaceNames
+                            : selectedWorkspaces
+                          ).join(" and ")
+                        : `${selectedWorkspaces.length} workspaces`}
                     </span>
                   </>
                 )}
@@ -371,26 +436,76 @@ export default function InventoryAssetsPage() {
           }
           actions={
             <>
-              <Select
-                value={selectedWorkspace}
-                onValueChange={(v) => {
-                  setSelectedWorkspace(v);
-                  setPage(1);
-                  forceNextRef.current = true;
-                }}
-              >
-                <SelectTrigger className="w-56">
-                  <SelectValue placeholder="Select workspace" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Workspaces</SelectItem>
-                  {workspaces.map((ws) => (
-                    <SelectItem key={ws.id} value={String(ws.id)}>
-                      {ws.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 w-56 justify-between font-normal",
+                      selectedWorkspaces.length > 0 && "border-primary"
+                    )}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <FolderOpenIcon className="size-4 shrink-0" />
+                      <span className="truncate">
+                        {selectedWorkspaces.length === 0
+                          ? "All Workspaces"
+                          : selectedWorkspaces.length === 1
+                            ? (selectedWorkspaceNames[0] ?? selectedWorkspaces[0])
+                            : `${selectedWorkspaces.length} workspaces`}
+                      </span>
+                    </span>
+                    <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="end">
+                  <div className="border-b p-2">
+                    <Input
+                      placeholder="Search workspaces..."
+                      value={workspaceSearch}
+                      onChange={(e) => setWorkspaceSearch(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  <ScrollArea className="h-[240px]">
+                    <div className="space-y-1 p-2">
+                      {filteredWorkspaces.map((ws) => (
+                        <label
+                          key={ws.id}
+                          className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+                        >
+                          <Checkbox
+                            checked={selectedWorkspaces.includes(String(ws.id))}
+                            onCheckedChange={() => toggleWorkspace(String(ws.id))}
+                          />
+                          <span className="truncate">{ws.name}</span>
+                        </label>
+                      ))}
+                      {filteredWorkspaces.length === 0 && (
+                        <p className="py-4 text-center text-sm text-muted-foreground">
+                          No workspaces found
+                        </p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                  {selectedWorkspaces.length > 0 && (
+                    <div className="border-t p-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-full"
+                        onClick={() => {
+                          setSelectedWorkspaces([]);
+                          setPage(1);
+                          forceNextRef.current = true;
+                        }}
+                      >
+                        All workspaces
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="outline"
                 size="sm"
@@ -448,7 +563,7 @@ export default function InventoryAssetsPage() {
         />
 
         {/* Filters section */}
-        <div className="border-b p-4 bg-muted/10">
+        <div className="border-b px-4 py-2.5 bg-muted/10">
           <AssetFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}

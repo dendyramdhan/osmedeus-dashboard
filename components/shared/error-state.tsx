@@ -23,7 +23,7 @@ export function ErrorState({
         className
       )}
     >
-      <div className="mb-4 rounded-full bg-destructive/10 p-4">
+      <div className="mb-4 rounded-full bg-destructive-soft p-4">
         <AlertCircleIcon className="size-8 text-destructive" />
       </div>
       <h3 className="mb-1 text-lg font-semibold">{title}</h3>

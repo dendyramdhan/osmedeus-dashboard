@@ -24,10 +24,10 @@ interface WorkspaceCardProps {
 
 function RiskScoreBadge({ score }: { score: number }) {
   const getRiskColor = (s: number) => {
-    if (s >= 8) return "bg-red-500/10 text-red-600 border-red-200 dark:border-red-800";
-    if (s >= 6) return "bg-orange-500/10 text-orange-600 border-orange-200 dark:border-orange-800";
-    if (s >= 4) return "bg-yellow-500/10 text-yellow-600 border-yellow-200 dark:border-yellow-800";
-    return "bg-green-500/10 text-green-600 border-green-200 dark:border-green-800";
+    if (s >= 8) return "bg-destructive-soft text-destructive border-transparent";
+    if (s >= 6) return "bg-orange-soft text-orange border-transparent";
+    if (s >= 4) return "bg-warning-soft text-warning border-transparent";
+    return "bg-success-soft text-success border-transparent";
   };
 
   return (
@@ -47,10 +47,10 @@ function VulnBadge({
   if (count === 0) return null;
 
   const colors = {
-    critical: "bg-red-500 text-white",
-    high: "bg-orange-500 text-white",
-    medium: "bg-yellow-500 text-yellow-900",
-    low: "bg-blue-500 text-white",
+    critical: "bg-destructive-soft text-destructive",
+    high: "bg-orange-soft text-orange",
+    medium: "bg-warning-soft text-warning",
+    low: "bg-info-soft text-info",
   };
 
   const labels = {

@@ -82,7 +82,7 @@ export default function LoginPage() {
         <div className="mx-auto mb-6 flex size-28 items-center justify-center rounded-2xl">
           <Image src={logo} alt="Osmedeus" priority className="h-28 w-auto logo-shadow" />
         </div>
-        <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+        <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
           Sign in to your Osmedeus Dashboard
         </CardDescription>
@@ -91,7 +91,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="flex items-center gap-2 rounded-control bg-destructive-soft p-3 text-sm text-destructive">
               <AlertCircleIcon className="size-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -160,15 +160,15 @@ export default function LoginPage() {
       </form>
     </Card>
     <p className="mt-4 text-center text-xs text-muted-foreground">
-      <code className="bg-background px-2 py-1 rounded font-mono">
+      <code className="rounded-control bg-muted px-2 py-1 font-mono">
         Crafted with{" "}
-        <HeartIcon className="size-3 text-red-500 inline-block align-middle" aria-label="love" />{" "}
+        <HeartIcon className="size-3 text-destructive inline-block align-middle" aria-label="love" />{" "}
         by{" "}
         <a
           href="http://twitter.com/j3ssie"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-700 no-underline"
+          className="text-primary no-underline hover:underline"
         >
           @j3ssie
         </a>

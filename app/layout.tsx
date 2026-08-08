@@ -21,13 +21,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+      {/* The page plane sits *under* the app canvas: chrome and auth screens
+          show `--og-page-bg`, and `SidebarInset` paints `bg-background` over
+          it for the dashboard column. */}
+      <body className="min-h-screen bg-page antialiased">
+        {/*
+          No `disableTransitionOnChange`: the palette swap is cross-faded
+          instead, by `components/layout/theme-toggle.tsx` setting
+          `data-theme-transition` on <html> for the length of the swap.
+        */}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ColorVarsProvider />
           <AuthProvider>
             {children}

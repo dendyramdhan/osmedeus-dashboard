@@ -312,7 +312,7 @@ export default function SchedulesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
 
       {formOpen && (

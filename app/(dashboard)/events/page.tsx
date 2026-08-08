@@ -12,8 +12,12 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { PaginatedResponse } from "@/lib/types/api";
-import { SortableTableHead } from "@/components/ui/sortable-table-head";
-import type { SortDirection } from "@/lib/types/asset";
+import {
+  CellShell,
+  DataGrid,
+  GridPagination,
+  type GridColDef,
+} from "@/components/ui/data-grid";
 
 export default function EventsPage() {
   const [events, setEvents] = React.useState<EventLogItem[]>([]);
@@ -32,12 +36,6 @@ export default function EventsPage() {
     workspace?: string;
     processed?: boolean | undefined;
   }>({});
-
-  type EventSortField = "topic" | "name" | "source" | "workspace" | "workflow" | "processed";
-  const [sortState, setSortState] = React.useState<{ field: EventSortField | null; direction: SortDirection }>({
-    field: null,
-    direction: "asc",
-  });
 
   const filteredEvents = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -62,47 +60,6 @@ export default function EventsPage() {
     });
   }, [events, query]);
 
-  const sortedEvents = React.useMemo(() => {
-    if (!sortState.field) return filteredEvents;
-
-    const dir = sortState.direction === "asc" ? 1 : -1;
-    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-
-    const getValue = (e: EventLogItem): string | number => {
-      switch (sortState.field) {
-        case "topic":
-          return e.topic ?? "";
-        case "name":
-          return e.name ?? "";
-        case "source":
-          return e.source ?? "";
-        case "workspace":
-          return e.workspace ?? "";
-        case "workflow":
-          return e.workflowName ?? "";
-        case "processed":
-          return e.processed ? 1 : 0;
-        default:
-          return "";
-      }
-    };
-
-    return [...filteredEvents].sort((a, b) => {
-      const av = getValue(a);
-      const bv = getValue(b);
-
-      let cmp = 0;
-      if (typeof av === "number" && typeof bv === "number") {
-        cmp = av - bv;
-      } else {
-        cmp = collator.compare(String(av), String(bv));
-      }
-
-      if (cmp !== 0) return cmp * dir;
-      return (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0);
-    });
-  }, [filteredEvents, sortState.direction, sortState.field]);
-
   const workspaceOptions = React.useMemo(() => {
     const values = new Set<string>();
     events.forEach((event) => {
@@ -110,15 +67,6 @@ export default function EventsPage() {
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [events]);
-
-  const toggleSort = (field: EventSortField) => {
-    setSortState((prev) => {
-      if (prev.field === field) {
-        return { field, direction: prev.direction === "asc" ? "desc" : "asc" };
-      }
-      return { field, direction: "asc" };
-    });
-  };
 
   const load = React.useCallback(async () => {
     try {
@@ -184,8 +132,78 @@ export default function EventsPage() {
   };
   const processedToVariant = (p: boolean): "success" | "warning" => (p ? "success" : "warning");
 
+  const columns = React.useMemo<GridColDef<EventLogItem>[]>(
+    () => [
+      {
+        field: "topic",
+        headerName: "Topic",
+        minWidth: 150,
+        cellRenderer: (p: { value: string }) => (
+          <Badge variant={topicToVariant(p.value)}>{p.value}</Badge>
+        ),
+      },
+      { field: "name", headerName: "Name", minWidth: 180, flex: 2 },
+      {
+        field: "source",
+        headerName: "Source",
+        minWidth: 120,
+        cellRenderer: (p: { value: string }) => (
+          <Badge variant={sourceToVariant(p.value)}>{p.value}</Badge>
+        ),
+      },
+      {
+        field: "workspace",
+        headerName: "Workspace",
+        minWidth: 140,
+        valueFormatter: (p) => p.value || "-",
+      },
+      {
+        field: "workflowName",
+        colId: "workflow",
+        headerName: "Workflow",
+        minWidth: 140,
+        valueFormatter: (p) => p.value || "-",
+      },
+      {
+        field: "processed",
+        headerName: "Processed",
+        minWidth: 130,
+        flex: 0,
+        width: 140,
+        cellRenderer: (p: { value: boolean }) => (
+          <Badge variant={processedToVariant(p.value)}>
+            {p.value ? "Processed" : "Unprocessed"}
+          </Badge>
+        ),
+      },
+      {
+        colId: "detail",
+        headerName: "Detail",
+        minWidth: 90,
+        flex: 0,
+        width: 90,
+        sortable: false,
+        cellRenderer: (p: { data: EventLogItem }) => (
+          <CellShell>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => openDetail(p.data)}
+              aria-label="View detail"
+            >
+              <EyeIcon className="size-4" />
+            </Button>
+          </CellShell>
+        ),
+      },
+    ],
+    // The `*ToVariant` helpers and `openDetail` are pure/stable, so the column
+    // set only needs building once.
+    []
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
 
       <Card>
@@ -214,7 +232,7 @@ export default function EventsPage() {
               <Button
                 variant="outline"
                 onClick={() => setClearOpen(true)}
-                className="gap-2 rounded-md border-red-300 text-red-700 hover:bg-red-500/10 hover:shadow-none dark:border-red-800 dark:text-red-300 dark:hover:bg-red-400/10"
+                className="gap-2 border-destructive/40 text-destructive hover:bg-destructive-soft hover:text-destructive hover:shadow-none"
               >
                 <Trash2Icon className="size-4" />
                 Empty Table
@@ -299,147 +317,20 @@ export default function EventsPage() {
               </SelectContent>
             </Select>
           </div>
-          {loading ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
-          ) : events.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">No events</div>
-          ) : filteredEvents.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">No matching events</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <SortableTableHead
-                      field="topic"
-                      currentSort={sortState}
-                      onSort={(f) => toggleSort(f as EventSortField)}
-                      className="py-2"
-                    >
-                      Topic
-                    </SortableTableHead>
-                    <SortableTableHead
-                      field="name"
-                      currentSort={sortState}
-                      onSort={(f) => toggleSort(f as EventSortField)}
-                      className="py-2"
-                    >
-                      Name
-                    </SortableTableHead>
-                    <SortableTableHead
-                      field="source"
-                      currentSort={sortState}
-                      onSort={(f) => toggleSort(f as EventSortField)}
-                      className="py-2"
-                    >
-                      Source
-                    </SortableTableHead>
-                    <SortableTableHead
-                      field="workspace"
-                      currentSort={sortState}
-                      onSort={(f) => toggleSort(f as EventSortField)}
-                      className="py-2"
-                    >
-                      Workspace
-                    </SortableTableHead>
-                    <SortableTableHead
-                      field="workflow"
-                      currentSort={sortState}
-                      onSort={(f) => toggleSort(f as EventSortField)}
-                      className="py-2"
-                    >
-                      Workflow
-                    </SortableTableHead>
-                    <SortableTableHead
-                      field="processed"
-                      currentSort={sortState}
-                      onSort={(f) => toggleSort(f as EventSortField)}
-                      className="py-2"
-                    >
-                      Processed
-                    </SortableTableHead>
-                    <th className="h-10 px-4 py-2 text-left align-middle font-medium text-muted-foreground">
-                      Detail
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedEvents.map((e) => (
-                    <tr key={e.id} className="border-b">
-                      <td className="px-4 py-2">
-                        <Badge variant={topicToVariant(e.topic)}>{e.topic}</Badge>
-                      </td>
-                      <td className="px-4 py-2">{e.name}</td>
-                      <td className="px-4 py-2">
-                        <Badge variant={sourceToVariant(e.source)}>{e.source}</Badge>
-                      </td>
-                      <td className="px-4 py-2">{e.workspace || "-"}</td>
-                      <td className="px-4 py-2">{e.workflowName || "-"}</td>
-                      <td className="px-4 py-2">
-                        <Badge variant={processedToVariant(e.processed)}>{e.processed ? "Processed" : "Unprocessed"}</Badge>
-                      </td>
-                      <td className="px-4 py-2">
-                        <Button variant="outline" size="icon-sm" onClick={() => openDetail(e)} aria-label="View detail">
-                          <EyeIcon className="size-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between px-2 py-3">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(pagination.page - 1) * pagination.pageSize + 1} to{" "}
-                    {Math.min(pagination.page * pagination.pageSize, pagination.totalItems)} of{" "}
-                    {pagination.totalItems.toLocaleString()} results
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={pagination.page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                        let pageNum: number;
-                        if (pagination.totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (pagination.page <= 3) {
-                          pageNum = i + 1;
-                        } else if (pagination.page >= pagination.totalPages - 2) {
-                          pageNum = pagination.totalPages - 4 + i;
-                        } else {
-                          pageNum = pagination.page - 2 + i;
-                        }
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={pagination.page === pageNum ? "default" : "outline"}
-                            size="sm"
-                            className="w-9"
-                            onClick={() => setPage(pageNum)}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
-                      disabled={pagination.page >= pagination.totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+          <DataGrid<EventLogItem>
+            rows={filteredEvents}
+            columns={columns}
+            getRowId={(e) => String(e.id)}
+            loading={loading}
+            emptyState={
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                {events.length === 0 ? "No events" : "No matching events"}
+              </div>
+            }
+          />
+
+          {pagination && (
+            <GridPagination pagination={pagination} onPageChange={setPage} />
           )}
         </CardContent>
       </Card>
