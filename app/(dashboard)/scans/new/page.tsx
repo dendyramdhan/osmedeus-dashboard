@@ -165,6 +165,13 @@ export default function NewScanPage() {
 
     // Workspace is optional; it can prefill target
 
+    // The schedules API stores one host string. A targets file has nowhere to go,
+    // so scheduling it would save an empty target.
+    if (enableSchedule && targetMode === "file") {
+      toast.error("A targets file cannot be scheduled. Enter one or more targets instead.");
+      return;
+    }
+
     // Validate target mode
     if (targetMode === "single") {
       if (!target.trim()) {
