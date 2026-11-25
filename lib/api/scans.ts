@@ -166,6 +166,22 @@ export async function fetchScan(id: string): Promise<Scan | null> {
 }
 
 /**
+ * One schedule record stores a single target. A targets file is not a host,
+ * and the schedules API has no target_file field, so that mode stays empty
+ * here instead of being saved as if the path were the target.
+ */
+export function scheduleTargets(
+  input: Pick<NewScanInput, "target" | "targets" | "empty_target">
+): string[] {
+  if (input.empty_target) return [""];
+  const direct = (input.target ?? "").trim();
+  if (direct) return [direct];
+  const lines = (input.targets ?? []).map((t) => t.trim()).filter(Boolean);
+  if (lines.length > 0) return lines;
+  return [""];
+}
+
+/**
  * Create a new scan
  */
 export async function createScan(input: NewScanInput): Promise<Scan> {
@@ -195,22 +211,30 @@ export async function createScan(input: NewScanInput): Promise<Scan> {
     return scan;
   }
   if (input.schedule) {
-    const body = {
-      name: `scheduled-${input.workflowId}-${Date.now()}`,
-      workflow_name: input.workflowId,
-      workflow_kind: input.workflowKind === "module" ? "module" : "flow",
-      target: input.target || "",
-      schedule: input.schedule,
-      enabled: true,
-    };
-    await http.post(`${API_PREFIX}/schedules`, body);
+    const targets = scheduleTargets(input);
+    const stamp = Date.now();
+    for (let i = 0; i < targets.length; i++) {
+      const body: Record<string, unknown> = {
+        name: `scheduled-${input.workflowId}-${stamp}${targets.length > 1 ? `-${i + 1}` : ""}`,
+        workflow_name: input.workflowId,
+        workflow_kind: input.workflowKind === "module" ? "module" : "flow",
+        target: targets[i],
+        schedule: input.schedule,
+        enabled: true,
+      };
+      if (input.params && Object.keys(input.params).length > 0) {
+        body.params = input.params;
+      }
+      await http.post(`${API_PREFIX}/schedules`, body);
+    }
+    const shown = targets.find((t) => t) ?? "";
     return {
-      id: `scan-${Date.now()}`,
+      id: `scan-${stamp}`,
       runId: "",
       runUuid: "",
       workflowName: input.workflowId,
       workflowKind: input.workflowKind || "flow",
-      target: input.target || "",
+      target: shown,
       status: "pending",
       priority: input.priority,
       totalSteps: 0,

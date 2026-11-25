@@ -203,6 +203,30 @@ export default function NewScanPage() {
         workspaceId: selectedWorkspace || undefined,
         schedule: enableSchedule ? cronExpression.trim() : undefined,
       };
+      // Scheduling keeps target and params; run-only options stay below.
+      if (targetMode === "single") {
+        payload.target = target.trim();
+      } else if (targetMode === "multiple") {
+        payload.targets = targetsText
+          .split(/\r?\n/)
+          .map((l: string) => l.trim())
+          .filter((l: string) => !!l);
+        if (!enableSchedule) payload.concurrency = concurrency;
+      } else if (targetMode === "file") {
+        payload.target_file = uploadedFilePath.trim();
+        if (!enableSchedule) payload.concurrency = concurrency;
+      } else if (targetMode === "empty") {
+        payload.empty_target = true;
+      }
+      const paramsObj: Record<string, string> = {};
+      params.forEach((p) => {
+        const k = p.key.trim();
+        const v = p.value.trim();
+        if (k && v) paramsObj[k] = v;
+      });
+      if (Object.keys(paramsObj).length > 0) {
+        payload.params = paramsObj;
+      }
       if (!enableSchedule) {
         if (Number.isFinite(threadsHold) && threadsHold > 0) {
           payload.threads_hold = threadsHold;
@@ -211,30 +235,6 @@ export default function NewScanPage() {
         payload.repeat = repeat;
         if (repeat && repeatWaitTime.trim()) {
           payload.repeat_wait_time = repeatWaitTime.trim();
-        }
-
-        if (targetMode === "single") {
-          payload.target = target.trim();
-        } else if (targetMode === "multiple") {
-          payload.targets = targetsText
-            .split(/\r?\n/)
-            .map((l: string) => l.trim())
-            .filter((l: string) => !!l);
-          payload.concurrency = concurrency;
-        } else if (targetMode === "file") {
-          payload.target_file = uploadedFilePath.trim();
-          payload.concurrency = concurrency;
-        } else if (targetMode === "empty") {
-          payload.empty_target = true;
-        }
-        const paramsObj: Record<string, string> = {};
-        params.forEach((p) => {
-          const k = p.key.trim();
-          const v = p.value.trim();
-          if (k && v) paramsObj[k] = v;
-        });
-        if (Object.keys(paramsObj).length > 0) {
-          payload.params = paramsObj;
         }
         payload.priority = priority;
         if (timeout.trim()) {
